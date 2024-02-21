@@ -13,7 +13,7 @@ import { GET } from "./word.json";
   let links: { source: string; target: string }[] = [];
   let Graph: ForceGraphInstance;
   let lock = false;
-  const onNodeClick = (node) => {
+  const onNodeClick = (node: any) => {
     if (lock) return;
     lock = true;
     Graph.centerAt(node.x, node.y, 1000);
@@ -23,7 +23,7 @@ import { GET } from "./word.json";
       .then((res) => res.json())
       .then((data) => {
         node.loading = false;
-        data.words.forEach((word) => {
+        data.words.forEach((word: string) => {
           const newNode = { id: word };
           nodes.push(newNode);
         });
@@ -34,7 +34,7 @@ import { GET } from "./word.json";
         );
         // add links
         links = links.concat(
-          data.words.map((word) => ({ source: node.id, target: word }))
+          data.words.map((word: string) => ({ source: node.id, target: word }))
         );
 
         Graph.graphData({
@@ -44,22 +44,29 @@ import { GET } from "./word.json";
         lock = false;
       });
   };
+
+  interface NodeObject {
+    id: string;
+    loading?: boolean;
+    hover?: boolean;
+  }
+
   ky.get("./word.json", { searchParams: { word: word } })
-    .then((res) => res.json())
+    .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
       console.log(data);
       nodes = data.words.map((word) => ({ id: word }));
       links = nodes.map((node) => ({ source: word, target: node.id }));
       nodes.push({ id: word });
       console.log(nodes);
-      Graph = ForceGraph()(document.getElementById("graph"))
+      Graph = ForceGraph()(document.getElementById("graph")!)
         .graphData({
           nodes,
           links,
         })
         .nodeId("id")
         .nodeAutoColorBy("id")
-        .nodeCanvasObject((node, ctx, globalScale) => {
+        .nodeCanvasObject((node: any, ctx, globalScale) => {
           const label = node.id;
           const fontSize = 18;
           ctx.font = `${fontSize}px Sans-Serif`;
@@ -74,9 +81,10 @@ import { GET } from "./word.json";
             ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
           }
           ctx.fillRect(
-            node.x - bckgDimensions[0] / 2,
-            node.y - bckgDimensions[1] / 2,
-            ...bckgDimensions
+            node.x! - bckgDimensions[0] / 2,
+            node.y! - bckgDimensions[1] / 2,
+            bckgDimensions[0],
+            bckgDimensions[1]
           );
 
           ctx.textAlign = "center";
@@ -103,7 +111,7 @@ import { GET } from "./word.json";
         // .d3AlphaDecay(0)
         // .d3VelocityDecay(0.9)
         // .enableNodeDrag(false)
-        .onNodeHover((node, previousNode) => {
+        .onNodeHover((node: any, previousNode: any) => {
           if (node) {
             node.hover = true;
           }
@@ -119,18 +127,19 @@ import { GET } from "./word.json";
           }
         })
         .linkCanvasObjectMode(() => "after")
-        .nodePointerAreaPaint((node, color, ctx) => {
+        .nodePointerAreaPaint((node: any, color, ctx) => {
           ctx.fillStyle = color;
           const bckgDimensions = node.__bckgDimensions;
           bckgDimensions &&
             ctx.fillRect(
               node.x - bckgDimensions[0] / 2,
               node.y - bckgDimensions[1] / 2,
-              ...bckgDimensions
+              bckgDimensions[0],
+              bckgDimensions[1]
             );
         });
 
-      Graph.d3Force("link")?.distance((link: LinkType) => {
+      Graph.d3Force("link")?.distance(() => {
         return 125;
       });
       Graph.d3Force("charge")!.strength(-100);

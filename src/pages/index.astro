@@ -6,12 +6,44 @@ import { GET } from "./word.json";
 ---
 
 <script>
-  import ForceGraph from "force-graph";
+  import ForceGraph, { type ForceGraphInstance } from "force-graph";
   import ky from "ky";
   let word = "human";
   let nodes: { id: string }[] = [];
   let links: { source: string; target: string }[] = [];
-  let Graph;
+  let Graph: ForceGraphInstance;
+  let lock = false;
+  const onNodeClick = (node) => {
+    if (lock) return;
+    lock = true;
+    Graph.centerAt(node.x, node.y, 1000);
+    const temp = node.id;
+    node.loading = true;
+    fetch(`./word.json?word=${temp}`)
+      .then((res) => res.json())
+      .then((data) => {
+        node.loading = false;
+        data.words.forEach((word) => {
+          const newNode = { id: word };
+          nodes.push(newNode);
+        });
+        // dedupe
+        nodes = nodes.filter(
+          (node, index, self) =>
+            self.findIndex((n) => n.id === node.id) === index
+        );
+        // add links
+        links = links.concat(
+          data.words.map((word) => ({ source: node.id, target: word }))
+        );
+
+        Graph.graphData({
+          nodes,
+          links,
+        });
+        lock = false;
+      });
+  };
   ky.get("./word.json", { searchParams: { word: word } })
     .then((res) => res.json())
     .then((data) => {
@@ -36,7 +68,11 @@ import { GET } from "./word.json";
             (n) => n + fontSize * 0.8
           ); // some padding
 
-          ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+          if (node.hover) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+          } else {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+          }
           ctx.fillRect(
             node.x - bckgDimensions[0] / 2,
             node.y - bckgDimensions[1] / 2,
@@ -46,43 +82,43 @@ import { GET } from "./word.json";
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
           ctx.fillStyle = node.color;
-          ctx.fillText(label, node.x, node.y);
+          if (node.loading) {
+            const currentTime = Date.now();
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 5, (currentTime / 100) % (2 * Math.PI), (currentTime / 100) % (2 * Math.PI) + Math.PI);
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.closePath();
+          } else {
+            ctx.fillText(label, node.x, node.y);
+
+          }
 
           node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
         })
-        .onNodeClick((node) => {
-					Graph.centerAt(node.x, node.y, 1000);
-					const temp = node.id
-					node.id = '<loading>'
-          fetch(`./word.json?word=${temp}`)
-            .then((res) => res.json())
-            .then((data) => {
-							node.id = temp;
-              data.words.forEach((word) => {
-                nodes.push({ id: word });
-              });
-              // dedupe
-              nodes = nodes.filter(
-                (node, index, self) =>
-                  self.findIndex((n) => n.id === node.id) === index
-              );
-              // add links
-              links = links.concat(
-                data.words.map((word) => ({ source: node.id, target: word }))
-              );
-
-              Graph.graphData({
-                nodes,
-                links,
-              });
-            });
-        })
+        .onNodeClick(onNodeClick)
         .linkWidth(10)
         .linkCurvature(0.25)
-  // .d3AlphaDecay(0)
-  // .d3VelocityDecay(0.9)
-	.enableNodeDrag(false)
-  .linkCanvasObjectMode(() => "after")
+        // .d3AlphaDecay(0)
+        // .d3VelocityDecay(0.9)
+        // .enableNodeDrag(false)
+        .onNodeHover((node, previousNode) => {
+          if (node) {
+            node.hover = true;
+          }
+          if (previousNode) {
+            previousNode.hover = false;
+          }
+        })
+        .onNodeDragEnd((node, translate) => {
+          console.log(node, translate);
+          // if translate is small enough, consider it a click
+          if (Math.abs(translate.x) < 10 && Math.abs(translate.y) < 10) {
+            onNodeClick(node);
+          }
+        })
+        .linkCanvasObjectMode(() => "after")
         .nodePointerAreaPaint((node, color, ctx) => {
           ctx.fillStyle = color;
           const bckgDimensions = node.__bckgDimensions;
@@ -97,11 +133,11 @@ import { GET } from "./word.json";
       Graph.d3Force("link")?.distance((link: LinkType) => {
         return 125;
       });
-			Graph.d3Force("charge")!.strength(-100);
-			Graph.d3Force('center', null);
+      Graph.d3Force("charge")!.strength(-100);
+      Graph.d3Force("center", null);
 
-// fit to canvas when engine stops
-Graph.onEngineStop(() => Graph.zoomToFit(400));
+      // fit to canvas when engine stops
+      Graph.onEngineStop(() => Graph.zoomToFit(400));
     });
 </script>
 

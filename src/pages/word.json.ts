@@ -13,10 +13,9 @@ const togetherai = new OpenAI({
 let driver: Driver;
 
 (async () => {
-  // URI examples: 'neo4j://localhost', 'neo4j+s://xxx.databases.neo4j.io'
   const URI = "neo4j+s://6361f1a4.databases.neo4j.io";
   const USER = "neo4j";
-  const PASSWORD = "qEKCBh2eoOVSOjeeMn9iQi-7gGawS76biBJWY4pMu-c";
+  const PASSWORD = process.env.NEO4J_PASSWORD;
 
   try {
     driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD));
@@ -38,6 +37,9 @@ const actionItemsSchema = z.object({
 const jsonSchema = zodToJsonSchema(actionItemsSchema, "mySchema");
 
 export const GET: APIRoute = async ({ url }) => {
+  // // delete all nodes
+  // await driver.executeQuery('MATCH (n) DETACH DELETE n');
+
   const word = url.searchParams.get("word");
   console.log(word);
   let { records, summary } = await driver.executeQuery(
@@ -55,7 +57,7 @@ export const GET: APIRoute = async ({ url }) => {
       messages: [
         {
           role: "system",
-          content: `You produce words associated with the provided word. The output should be a single word with no punctuation or symbols, plural words should not be included.`,
+          content: `You produce words associated with the provided word. The output should be a single word with no punctuation or symbols.`,
         },
         {
           role: "user",

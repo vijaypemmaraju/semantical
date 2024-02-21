@@ -56,10 +56,11 @@ export const GET: APIRoute = async ({ url }) => {
 
   const words = records.map(record => record.toObject().p.properties.word);
   const words2 = records2.map(record => record.toObject().p.properties.word);
+  const combinedWords = Array.from(new Set([...words, ...words2]));
   // console.log(words, words2);
   // let records = [];
   // let words = [] as string[];
-  if (records.length === 0 || records2.length === 0) {
+  if (combinedWords.length < 3) {
     driver.executeQuery('MERGE (n:Word {word: $word}) RETURN n', { word });
     // const { records: wordsThatAssociateWithWord } = await driver.executeQuery(
     //   `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE p.word = $word RETURN n`,
@@ -103,6 +104,6 @@ export const GET: APIRoute = async ({ url }) => {
     return new Response(JSON.stringify(output));
   } else {
     // console.log('found exist');
-    return new Response(JSON.stringify({ words: Array.from(new Set([...words, ...words2])) }));
+    return new Response(JSON.stringify({ words: combinedWords }));
   }
 };

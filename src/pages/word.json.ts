@@ -47,8 +47,14 @@ export const GET: APIRoute = async ({ url }) => {
     { word },
     { database: "neo4j" }
   );
+  let { records: records2 } = await driver.executeQuery(
+    `MATCH (n:Word)<-[:ASSOCIATED_WITH]-(p:Word) WHERE n.word = $word RETURN p`,
+    { word },
+    { database: "neo4j" }
+  );
 
   const words = records.map(record => record.toObject().p.properties.word);
+  const words2 = records2.map(record => record.toObject().p.properties.word);
   // console.log(words);
   // let records = [];
   // let words = [] as string[];
@@ -96,6 +102,6 @@ export const GET: APIRoute = async ({ url }) => {
     return new Response(JSON.stringify(output));
   } else {
     console.log('found exist');
-    return new Response(JSON.stringify({ words }));
+    return new Response(JSON.stringify({ words: Array.from(new Set([...words, ...words2])) }));
   }
 };

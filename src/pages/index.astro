@@ -8,41 +8,77 @@ import { GET } from "./word.json";
 <script>
   import ForceGraph, { type ForceGraphInstance } from "force-graph";
   import ky from "ky";
-  let word = "human";
+  import copy from "copy-to-clipboard";
+
+  const [word, goal] = await ky.get("./start.json").json<string[]>();
+  document.getElementById("goal")!.innerText = `Find ${goal}`;
   let nodes: { id: string }[] = [];
   let links: { source: string; target: string }[] = [];
   let Graph: ForceGraphInstance;
   let lock = false;
-  const onNodeClick = (node: any) => {
-    if (lock) return;
-    lock = true;
+  let clicks = 0;
+  let won = false;
+  const onNodeClick = async (node: any) => {
     Graph.centerAt(node.x, node.y, 1000);
     const temp = node.id;
     node.loading = true;
-    fetch(`./word.json?word=${temp}`)
-      .then((res) => res.json())
-      .then((data) => {
-        node.loading = false;
-        data.words.forEach((word: string) => {
-          const newNode = { id: word };
-          nodes.push(newNode);
-        });
-        // dedupe
-        nodes = nodes.filter(
-          (node, index, self) =>
-            self.findIndex((n) => n.id === node.id) === index
-        );
-        // add links
-        links = links.concat(
-          data.words.map((word: string) => ({ source: node.id, target: word }))
-        );
-
-        Graph.graphData({
-          nodes,
-          links,
-        });
-        lock = false;
+    if (lock) {
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (!lock) {
+            clearInterval(interval);
+            resolve(null);
+          }
+        }, 100);
       });
+    }
+    lock = true;
+    clicks++;
+    const data = await ky.get(`./word.json?word=${temp}`).json<{
+      words: string[];
+    }>();
+    node.loading = false;
+    let newNodes: { id: string }[] = [];
+    data.words.forEach((word: string) => {
+      const newNode = { id: word };
+      newNodes.push(newNode);
+      nodes.push(newNode);
+    });
+    // dedupe
+    nodes = nodes.filter(
+      (node, index, self) => self.findIndex((n) => n.id === node.id) === index
+    );
+    // add links
+    links = links.concat(
+      data.words.map((word: string) => ({ source: node.id, target: word }))
+    );
+    if (nodes.find((n) => n.id === goal && !won)) {
+      won = true;
+      const dialog = document.getElementById("dialog") as HTMLDialogElement;
+      dialog.showModal();
+      document.getElementById("info")!.innerText =
+        `You found ${goal} in ${clicks} clicks!`;
+      // document.getElementById("share")!.addEventListener("click", () => {
+      //   let text = `semantical.fun - ${clicks} clicks`;
+      //   if (navigator.share) {
+      //     navigator.share({
+      //       title: "I found the word!",
+      //       text,
+      //       url: window.location.href,
+      //     });
+      //   } else {
+      //     copy(text);
+      //     alert("copied to clipboard!");
+      //   }
+      // });
+    }
+    Graph.graphData({
+      nodes,
+      links,
+    });
+    lock = false;
+
+    return newNodes;
   };
 
   interface NodeObject {
@@ -51,6 +87,8 @@ import { GET } from "./word.json";
     hover?: boolean;
   }
 
+  const nodesById: { [id: string]: NodeObject } = {};
+
   ky.get("./word.json", { searchParams: { word: word } })
     .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
@@ -58,6 +96,9 @@ import { GET } from "./word.json";
       nodes = data.words.map((word) => ({ id: word }));
       links = nodes.map((node) => ({ source: word, target: node.id }));
       nodes.push({ id: word });
+      nodes = nodes.filter(
+        (node, index, self) => self.findIndex((n) => n.id === node.id) === index
+      );
       console.log(nodes);
       Graph = ForceGraph()(document.getElementById("graph")!)
         .graphData({
@@ -86,6 +127,20 @@ import { GET } from "./word.json";
             bckgDimensions[0],
             bckgDimensions[1]
           );
+          // draw border around rect
+          if (node.id === goal) {
+            ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
+          } else if (node.id === word) {
+            ctx.strokeStyle = "rgba(55, 255, 55, 0.8)";
+          } else {
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+          }
+          ctx.strokeRect(
+            node.x! - bckgDimensions[0] / 2,
+            node.y! - bckgDimensions[1] / 2,
+            bckgDimensions[0],
+            bckgDimensions[1]
+          );
 
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
@@ -93,23 +148,26 @@ import { GET } from "./word.json";
           if (node.loading) {
             const currentTime = Date.now();
             ctx.beginPath();
-            ctx.arc(node.x, node.y, 5, (currentTime / 100) % (2 * Math.PI), (currentTime / 100) % (2 * Math.PI) + Math.PI);
+            ctx.arc(
+              node.x,
+              node.y,
+              5,
+              (currentTime / 100) % (2 * Math.PI),
+              ((currentTime / 100) % (2 * Math.PI)) + Math.PI
+            );
             ctx.strokeStyle = "white";
             ctx.lineWidth = 2;
             ctx.stroke();
             ctx.closePath();
           } else {
             ctx.fillText(label, node.x, node.y);
-
           }
-
+          nodesById[node.id] = node;
           node.__bckgDimensions = bckgDimensions; // to re-use in nodePointerAreaPaint
         })
         .onNodeClick(onNodeClick)
         .linkWidth(6)
-        .zoom(/* check mobile */
-          window.innerWidth < 600 ? 1.5 : 1
-        )
+        .zoom(/* check mobile */ window.innerWidth < 600 ? 1.5 : 1)
         .linkColor(() => "rgba(128, 128, 256, 0.2)")
         .linkDirectionalParticles(2)
         .linkCurvature(0.25)
@@ -150,11 +208,50 @@ import { GET } from "./word.json";
       Graph.d3Force("charge")!.strength(-100);
       Graph.d3Force("center", null);
     });
+
+  // perform a BFS to get the graph
+  // setTimeout(async () => {
+  //   let visited = new Set<string>();
+  //   let current = nodesById[word];
+  //   let queue = [current];
+  //   while (queue.length > 0) {
+  //     current = queue.shift()!;
+  //     console.log(current);
+  //     if (visited.has(current.id)) {
+  //       continue;
+  //     }
+  //     visited.add(current.id);
+  //     const newNodes = await onNodeClick(current);
+  //     console.log("newNodes", newNodes);
+  //     await new Promise((resolve) => {
+  //       setTimeout(() => {
+  //         newNodes?.forEach((node) => {
+  //           queue.push(nodesById[node.id]);
+  //         });
+  //         resolve(null);
+  //       }, 2000);
+  //     });
+  //   }
+  // }, 1000);
 </script>
 
 <Layout title="Semantical">
   <main>
+    <h1 id="goal"></h1>
     <div id="graph"></div>
+    <dialog id="dialog" class="modal">
+      <div class="modal-box">
+        <h3 class="font-bold text-lg">You win!</h3>
+        <p id="info" class="py-4"></p>
+        <div class="modal-action">
+          <form method="dialog">
+            <!-- <button id="share" class="btn">Share</button> -->
+            <!-- if there is a button in form, it will close the modal -->
+            <button class="btn">Close</button>
+          </form>
+        </div>
+      </div>
+    </dialog>
   </main>
 
   <style>

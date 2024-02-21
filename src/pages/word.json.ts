@@ -49,9 +49,16 @@ export const GET: APIRoute = async ({ url }) => {
   );
 
   const words = records.map(record => record.toObject().p.properties.word);
-  console.log(words);
+  // console.log(words);
+  // let records = [];
+  // let words = [] as string[];
   if (records.length === 0) {
     driver.executeQuery('MERGE (n:Word {word: $word}) RETURN n', { word });
+    // const { records: wordsThatAssociateWithWord } = await driver.executeQuery(
+    //   `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE p.word = $word RETURN n`,
+    //   { word }
+    // );
+    // console.log('wordsThatAssociateWithWord', wordsThatAssociateWithWord.map(record => record.toObject().n.properties.word));
     console.time();
     const extract = await togetherai.chat.completions.create({
       messages: [
@@ -59,6 +66,10 @@ export const GET: APIRoute = async ({ url }) => {
           role: "system",
           content: `You produce words associated with the provided word. The output should be a single word with no punctuation or symbols.`,
         },
+        // ...(wordsThatAssociateWithWord.length > 0 ? [{
+        //   role: "system" as const,
+        //   content: "Do not include the following words in the output: " + wordsThatAssociateWithWord.map(record => record.toObject().n.properties.word).join(', '),
+        // }] : []),
         {
           role: "user",
           content: word || "human",
@@ -72,7 +83,7 @@ export const GET: APIRoute = async ({ url }) => {
     console.log(output);
     console.timeEnd();
 
-    // in the graph database, create a new node for each word (if it doesn't already exist). Then, create a relationship between the provided word and each of the words in the output
+    // // in the graph database, create a new node for each word (if it doesn't already exist). Then, create a relationship between the provided word and each of the words in the output
     for (let newWord of output.words) {
       driver.executeQuery('MERGE (n:Word {word: $word}) RETURN n', { word: newWord });
       const result = await driver.executeQuery(

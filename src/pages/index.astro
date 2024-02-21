@@ -92,14 +92,14 @@ import { GET } from "./word.json";
   ky.get("./word.json", { searchParams: { word: word } })
     .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
-      console.log(data);
+      // console.log(data);
       nodes = data.words.map((word) => ({ id: word }));
       links = nodes.map((node) => ({ source: word, target: node.id }));
       nodes.push({ id: word });
       nodes = nodes.filter(
         (node, index, self) => self.findIndex((n) => n.id === node.id) === index
       );
-      console.log(nodes);
+      // console.log(nodes);
       Graph = ForceGraph()(document.getElementById("graph")!)
         .graphData({
           nodes,
@@ -224,15 +224,24 @@ import { GET } from "./word.json";
   //     const newNodes = await onNodeClick(current);
   //     console.log("newNodes", newNodes);
   //     await new Promise((resolve) => {
-  //       setTimeout(() => {
-  //         newNodes?.forEach((node) => {
-  //           queue.push(nodesById[node.id]);
-  //         });
+  //       setTimeout(async () => {
+  //         for (let node of newNodes) {
+  //           let nodeById = nodesById[node.id];
+  //           while (!nodeById) {
+  //             nodeById = nodesById[node.id];
+  //             await new Promise((resolve) => {
+  //               setTimeout(() => {
+  //                 resolve(null);
+  //               }, 100);
+  //             });
+  //           }
+  //           queue.push(nodeById);
+  //         }
   //         resolve(null);
-  //       }, 2000);
+  //       }, 0);
   //     });
   //   }
-  // }, 1000);
+  // }, 5000);
 </script>
 
 <Layout title="Semantical">

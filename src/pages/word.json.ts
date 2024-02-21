@@ -20,10 +20,10 @@ let driver: Driver;
   try {
     driver = neo4j.driver(URI, neo4j.auth.basic(USER, PASSWORD!));
     const serverInfo = await driver.getServerInfo();
-    console.log("Connection established");
-    console.log(serverInfo);
+    // console.log("Connection established");
+    // console.log(serverInfo);
   } catch (err) {
-    console.log(`Connection error\n${err}\nCause: ${(err as any).cause}`);
+    // console.log(`Connection error\n${err}\nCause: ${(err as any).cause}`);
   }
 })();
 
@@ -32,6 +32,7 @@ const actionItemsSchema = z.object({
   words: z
     .array(z.string())
     .describe("words associated with the given word")
+    .min(3)
     .max(3),
 });
 const jsonSchema = zodToJsonSchema(actionItemsSchema, "mySchema");
@@ -41,7 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
   // await driver.executeQuery('MATCH (n) DETACH DELETE n');
 
   const word = url.searchParams.get("word");
-  console.log(word);
+  // console.log(word);
   let { records, summary } = await driver.executeQuery(
     `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE n.word = $word RETURN p`,
     { word },
@@ -55,17 +56,17 @@ export const GET: APIRoute = async ({ url }) => {
 
   const words = records.map(record => record.toObject().p.properties.word);
   const words2 = records2.map(record => record.toObject().p.properties.word);
-  // console.log(words);
+  // console.log(words, words2);
   // let records = [];
   // let words = [] as string[];
-  if (records.length === 0) {
+  if (records.length === 0 || records2.length === 0) {
     driver.executeQuery('MERGE (n:Word {word: $word}) RETURN n', { word });
     // const { records: wordsThatAssociateWithWord } = await driver.executeQuery(
     //   `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE p.word = $word RETURN n`,
     //   { word }
     // );
     // console.log('wordsThatAssociateWithWord', wordsThatAssociateWithWord.map(record => record.toObject().n.properties.word));
-    console.time();
+    // console.time();
     const extract = await togetherai.chat.completions.create({
       messages: [
         {
@@ -86,8 +87,8 @@ export const GET: APIRoute = async ({ url }) => {
       response_format: { type: "json_object", schema: jsonSchema },
     });
     const output = JSON.parse(extract.choices[0].message.content!);
-    console.log(output);
-    console.timeEnd();
+    // console.log(output);
+    // console.timeEnd();
 
     // // in the graph database, create a new node for each word (if it doesn't already exist). Then, create a relationship between the provided word and each of the words in the output
     for (let newWord of output.words) {
@@ -96,12 +97,12 @@ export const GET: APIRoute = async ({ url }) => {
         `MATCH (n:Word {word: $input}), (p:Word {word: $word}) MERGE (n)-[:ASSOCIATED_WITH]->(p) RETURN p`,
         { word: newWord, input: word }
       );
-      // console.log(result);
+      console.log(result);
     }
 
     return new Response(JSON.stringify(output));
   } else {
-    console.log('found exist');
+    // console.log('found exist');
     return new Response(JSON.stringify({ words: Array.from(new Set([...words, ...words2])) }));
   }
 };

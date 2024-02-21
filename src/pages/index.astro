@@ -107,6 +107,9 @@ import { GET } from "./word.json";
         })
         .onNodeClick(onNodeClick)
         .linkWidth(6)
+        .zoom(/* check mobile */
+          window.innerWidth < 600 ? 1.5 : 1
+        )
         .linkColor(() => "rgba(128, 128, 256, 0.2)")
         .linkDirectionalParticles(2)
         .linkCurvature(0.25)
@@ -146,9 +149,6 @@ import { GET } from "./word.json";
       });
       Graph.d3Force("charge")!.strength(-100);
       Graph.d3Force("center", null);
-
-      // fit to canvas when engine stops
-      Graph.onEngineStop(() => Graph.zoomToFit(400));
     });
 </script>
 

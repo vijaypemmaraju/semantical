@@ -67,19 +67,30 @@ import { GET } from "./word.json";
       dialog.showModal();
       document.getElementById("info")!.innerText =
         `You found ${goal} in ${clicks} clicks!`;
-      // document.getElementById("share")!.addEventListener("click", () => {
-      //   let text = `semantical.fun - ${clicks} clicks`;
-      //   if (navigator.share) {
-      //     navigator.share({
-      //       title: "I found the word!",
-      //       text,
-      //       url: window.location.href,
-      //     });
-      //   } else {
-      //     copy(text);
-      //     alert("copied to clipboard!");
-      //   }
-      // });
+      document.getElementById("share")!.addEventListener("click", () => {
+        let text = `semantical.fun - I found today's word in ${clicks} clicks!`;
+        if (navigator.share) {
+          navigator.share({
+            title: "I found the word!",
+            text,
+            url: window.location.href,
+          });
+        } else {
+          console.log("copying to clipboard", text);
+          setTimeout(() => copy(text), 0);
+          const div = document.createElement("div");
+          div.innerHTML = `<div role="alert" class="alert alert-info absolute top-0 right-0 m-4 p-4 bg-blue-100 text-blue-900 rounded-lg flex items-center space-x-2 w-[50vw]">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      <span>Copied to clipboard.</span>
+    </div>`;
+
+          document.querySelector('main').appendChild(div);
+          setTimeout(() => {
+            div.remove();
+          }, 3000);
+
+        }
+      });
     }
     Graph.graphData({
       nodes,
@@ -257,7 +268,7 @@ import { GET } from "./word.json";
 
 <Layout title="Semantical">
   <main>
-    <h1 id="goal"></h1>
+    <h1 class="py-1 px-2" id="goal"></h1>
     <div id="graph"></div>
     <dialog id="dialog" class="modal">
       <div class="modal-box">
@@ -265,7 +276,14 @@ import { GET } from "./word.json";
         <p id="info" class="py-4"></p>
         <div class="modal-action">
           <form method="dialog">
-            <!-- <button id="share" class="btn">Share</button> -->
+            <button id="share" class="btn btn-primary">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                class="stroke-current shrink-0 w-6 h-6"
+              >
+              Share</button>
             <!-- if there is a button in form, it will close the modal -->
             <button class="btn">Close</button>
           </form>
@@ -277,7 +295,7 @@ import { GET } from "./word.json";
   <style>
     main {
       margin: auto;
-      padding: 1rem;
+      padding: 0rem;
       width: 100vw;
       height: 100vh;
       color: white;

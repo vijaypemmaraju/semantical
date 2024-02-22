@@ -84,7 +84,7 @@ import { GET } from "./word.json";
       <span>Copied to clipboard.</span>
     </div>`;
 
-          document.querySelector('main').appendChild(div);
+          document.querySelector('main')!.appendChild(div);
           setTimeout(() => {
             div.remove();
           }, 3000);

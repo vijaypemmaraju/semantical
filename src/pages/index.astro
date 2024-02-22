@@ -40,7 +40,7 @@ import { GET } from "./word.json";
     let data;
     try {
       data = await ky
-        .get(`./word.json?word=${temp}`, { timeout: 1000, retry: 3 })
+        .get(`./word.json?word=${temp}`, { timeout: 3000, retry: 3 })
         .json<{
           words: string[];
         }>();
@@ -114,7 +114,7 @@ import { GET } from "./word.json";
 
   ky.get("./word.json", {
     searchParams: { word: word },
-    timeout: 1000,
+    timeout: 3000,
     retry: 3,
   })
     .then((res) => res.json<{ words: string[] }>())

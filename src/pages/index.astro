@@ -34,7 +34,7 @@ import { GET } from "./word.json";
     }
     lock = true;
     clicks++;
-    const data = await ky.get(`./word.json?word=${temp}`).json<{
+    const data = await ky.get(`./word.json?word=${temp}`, { timeout: 30000, retry: 3 }).json<{
       words: string[];
     }>();
     node.loading = false;
@@ -89,7 +89,7 @@ import { GET } from "./word.json";
 
   const nodesById: { [id: string]: NodeObject } = {};
 
-  ky.get("./word.json", { searchParams: { word: word } })
+  ky.get("./word.json", { searchParams: { word: word }, timeout: 30000, retry: 3 })
     .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
       // console.log(data);
@@ -210,38 +210,42 @@ import { GET } from "./word.json";
     });
 
   // perform a BFS to get the graph
-  // setTimeout(async () => {
-  //   let visited = new Set<string>();
-  //   let current = nodesById[word];
-  //   let queue = [current];
-  //   while (queue.length > 0) {
-  //     current = queue.shift()!;
-  //     console.log(current);
-  //     if (visited.has(current.id)) {
-  //       continue;
-  //     }
-  //     visited.add(current.id);
-  //     const newNodes = await onNodeClick(current);
-  //     console.log("newNodes", newNodes);
-  //     await new Promise((resolve) => {
-  //       setTimeout(async () => {
-  //         for (let node of newNodes) {
-  //           let nodeById = nodesById[node.id];
-  //           while (!nodeById) {
-  //             nodeById = nodesById[node.id];
-  //             await new Promise((resolve) => {
-  //               setTimeout(() => {
-  //                 resolve(null);
-  //               }, 100);
-  //             });
-  //           }
-  //           queue.push(nodeById);
-  //         }
-  //         resolve(null);
-  //       }, 0);
-  //     });
-  //   }
-  // }, 5000);
+  const bfs = () => {
+    setTimeout(async () => {
+      let visited = new Set<string>();
+      let current = nodesById[word];
+      let queue = [current];
+      while (queue.length > 0) {
+        current = queue.shift()!;
+        console.log(current);
+        if (visited.has(current.id)) {
+          continue;
+        }
+        visited.add(current.id);
+        const newNodes = await onNodeClick(current);
+        console.log("newNodes", newNodes);
+        await new Promise((resolve) => {
+          setTimeout(async () => {
+            for (let node of newNodes) {
+              let nodeById = nodesById[node.id];
+              while (!nodeById) {
+                nodeById = nodesById[node.id];
+                await new Promise((resolve) => {
+                  setTimeout(() => {
+                    resolve(null);
+                  }, 100);
+                });
+              }
+              queue.push(nodeById);
+            }
+            resolve(null);
+          }, 0);
+        });
+      }
+    }, 5000);
+  };
+  (window as any).bfs = bfs;
+  // bfs();
 </script>
 
 <Layout title="Semantical">

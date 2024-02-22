@@ -31,9 +31,9 @@ let driver: Driver;
 const actionItemsSchema = z.object({
   words: z
     .array(z.string())
-    .describe("words associated with the given word")
-    .min(3)
-    .max(3),
+    .describe("words semantically related to the given word")
+    .min(4)
+    .max(4),
 });
 const jsonSchema = zodToJsonSchema(actionItemsSchema, "mySchema");
 
@@ -60,7 +60,7 @@ export const GET: APIRoute = async ({ url }) => {
   // console.log(words, words2);
   // let records = [];
   // let words = [] as string[];
-  if (combinedWords.length < 3) {
+  if (combinedWords.length < 4) {
     driver.executeQuery('MERGE (n:Word {word: $word}) RETURN n', { word });
     // const { records: wordsThatAssociateWithWord } = await driver.executeQuery(
     //   `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE p.word = $word RETURN n`,
@@ -72,7 +72,7 @@ export const GET: APIRoute = async ({ url }) => {
       messages: [
         {
           role: "system",
-          content: `You produce words associated with the provided word. The output should be a single word with no punctuation or symbols.`,
+          content: `You produce a dictionary word semantically related to the provided word.`,
         },
         // ...(wordsThatAssociateWithWord.length > 0 ? [{
         //   role: "system" as const,

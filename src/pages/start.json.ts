@@ -25,20 +25,15 @@ export const GET: APIRoute = async ({ url }) => {
     throw new Error("Driver is not initialized");
   }
   const result = await driver.executeQuery(`
-  MATCH (t)-[:ASSOCIATED_WITH]->(a)
-  MATCH (a)-[:ASSOCIATED_WITH]->(b)
-  RETURN a, rand() as r
-  ORDER BY r
+  MATCH p=(start:Word)-[L*5..10]->(end:Word)
+  RETURN start, end, length(p)
+  ORDER BY length(p) DESC
   LIMIT 100
 `);
+// console.log(result);
 
-const words = result.records.map((record) => record.toObject().a.properties.word);
-const set = new Set(words);
-let uniqueWords = Array.from(set);
-console.log(uniqueWords);
-if (uniqueWords.length === 0) {
-  uniqueWords = ['human', 'girl'];
-}
+const words = result.records.map((record) => record.toObject());
+const word = words[Math.floor(Math.random() * words.length)];
 
-return new Response(JSON.stringify([uniqueWords[0], uniqueWords[1]]));
+return new Response(JSON.stringify([word.start.properties.word, word.end.properties.word]));
 };

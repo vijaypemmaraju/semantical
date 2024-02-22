@@ -10,7 +10,9 @@ import { GET } from "./word.json";
   import ky from "ky";
   import copy from "copy-to-clipboard";
 
-  const [word, goal] = await ky.get("./start.json", { timeout: 3000 }).json<string[]>();
+  const [word, goal] = await ky
+    .get("./start.json", { timeout: 3000 })
+    .json<string[]>();
   document.getElementById("goal")!.innerText = `Find ${goal}`;
   let nodes: { id: string }[] = [];
   let links: { source: string; target: string }[] = [];
@@ -37,9 +39,11 @@ import { GET } from "./word.json";
     clicks++;
     let data;
     try {
-      data = await ky.get(`./word.json?word=${temp}`, { timeout: 1000, retry: 3 }).json<{
-        words: string[];
-      }>();
+      data = await ky
+        .get(`./word.json?word=${temp}`, { timeout: 1000, retry: 3 })
+        .json<{
+          words: string[];
+        }>();
     } catch (e) {
       console.error(e);
       node.loading = false;
@@ -84,11 +88,10 @@ import { GET } from "./word.json";
       <span>Copied to clipboard.</span>
     </div>`;
 
-          document.querySelector('main')!.appendChild(div);
+          document.querySelector("main")!.appendChild(div);
           setTimeout(() => {
             div.remove();
           }, 3000);
-
         }
       });
     }
@@ -109,7 +112,11 @@ import { GET } from "./word.json";
 
   const nodesById: { [id: string]: NodeObject } = {};
 
-  ky.get("./word.json", { searchParams: { word: word }, timeout: 1000, retry: 3 })
+  ky.get("./word.json", {
+    searchParams: { word: word },
+    timeout: 1000,
+    retry: 3,
+  })
     .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
       nodes = data.words.map((word) => ({ id: word }));
@@ -162,7 +169,9 @@ import { GET } from "./word.json";
 
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillStyle = node.clicked ? 'rgba(138, 128, 128, 0.8)' : node.color;
+          ctx.fillStyle = node.clicked
+            ? "rgba(138, 128, 128, 0.8)"
+            : node.color;
           if (node.loading) {
             const currentTime = Date.now();
             ctx.beginPath();
@@ -283,24 +292,26 @@ import { GET } from "./word.json";
                 viewBox="0 0 24 24"
                 class="stroke-current shrink-0 w-6 h-6"
               >
-              Share</button>
-            <!-- if there is a button in form, it will close the modal -->
-            <button class="btn">Close</button>
+                Share</svg
+              >
+              <!-- if there is a button in form, it will close the modal -->
+              <button class="btn">Close</button>
+            </button>
           </form>
         </div>
       </div>
     </dialog>
-  </main>
 
-  <style>
-    main {
-      margin: auto;
-      padding: 0rem;
-      width: 100vw;
-      height: 100vh;
-      color: white;
-      font-size: 20px;
-      line-height: 1.6;
-    }
-  </style>
+    <style>
+      main {
+        margin: auto;
+        padding: 0rem;
+        width: 100vw;
+        height: 100vh;
+        color: white;
+        font-size: 20px;
+        line-height: 1.6;
+      }
+    </style>
+  </main>
 </Layout>

@@ -11,7 +11,7 @@ import { GET } from "./word.json";
   import copy from "copy-to-clipboard";
 
   const [word, goal] = await ky
-    .get("./start.json", { timeout: 10000 })
+    .get("./start.json", { timeout: 30000 })
     .json<string[]>();
   document.getElementById("goal")!.innerText = `Find ${goal}`;
   let nodes: { id: string }[] = [];
@@ -40,17 +40,19 @@ import { GET } from "./word.json";
     let data;
     try {
       data = await ky
-        .get(`./word.json?word=${temp}`, { timeout: 3000, retry: 3 })
+        .get(`./word.json?word=${temp}`, { timeout: 30000, retry: 3 })
         .json<{
           words: string[];
         }>();
     } catch (e) {
       console.error(e);
       node.loading = false;
+      node.error = true;
       lock = false;
       return [];
     }
     node.loading = false;
+    node.error = false;
     let newNodes: { id: string }[] = [];
     data.words.forEach((word: string) => {
       const newNode = { id: word };
@@ -114,7 +116,7 @@ import { GET } from "./word.json";
 
   ky.get("./word.json", {
     searchParams: { word: word },
-    timeout: 3000,
+    timeout: 30000,
     retry: 3,
   })
     .then((res) => res.json<{ words: string[] }>())
@@ -172,6 +174,7 @@ import { GET } from "./word.json";
           ctx.fillStyle = node.clicked
             ? "rgba(138, 128, 128, 0.8)"
             : node.color;
+          ctx.fillStyle = node.error ? "rgba(255, 0, 0, 0.8)" : ctx.fillStyle;
           if (node.loading) {
             const currentTime = Date.now();
             ctx.beginPath();
@@ -277,8 +280,10 @@ import { GET } from "./word.json";
 
 <Layout title="Semantical">
   <main>
-    <h1 class="py-1 px-2" id="goal"></h1>
-    <div id="graph"></div>
+    <h1 class="p-4 text-3xl" id="goal"></h1>
+    <div id="graph"><div class="w-[100vw] h-[100vh] flex items-center justify-center">
+      <span class="loading loading-spinner loading-lg"></span>
+    </div></div>
     <dialog id="dialog" class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">You win!</h3>

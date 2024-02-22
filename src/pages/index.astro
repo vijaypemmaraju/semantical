@@ -11,7 +11,7 @@ import { GET } from "./word.json";
   import copy from "copy-to-clipboard";
 
   const [word, goal] = await ky
-    .get("./start.json", { timeout: 3000 })
+    .get("./start.json", { timeout: 10000 })
     .json<string[]>();
   document.getElementById("goal")!.innerText = `Find ${goal}`;
   let nodes: { id: string }[] = [];

@@ -1,15 +1,8 @@
 import type { APIRoute } from "astro";
-import OpenAI from "openai";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
-import neo4j, { Driver } from "neo4j-driver";
 import driver from "../db/driver";
 
-// Defining the Together.ai client
-const togetherai = new OpenAI({
-  apiKey: process.env.TOGETHER_API_KEY,
-  baseURL: "https://api.together.xyz/v1",
-});
 
 // Defining the schema we want our data in
 const actionItemsSchema = z.object({
@@ -24,16 +17,30 @@ export const GET: APIRoute = async ({ url }) => {
   if (!driver) {
     throw new Error("Driver is not initialized");
   }
+  // find and delete all nodes that contain a _
+  // const result1 = await driver.executeQuery(`
+  // MATCH (n:Word)
+  // WHERE n.word CONTAINS "_"
+  // DETACH DELETE n
+  // RETURN n
+  // `);
   const result = await driver.executeQuery(`
-  MATCH p=(start:Word)-[L*5..10]->(end:Word)
+  MATCH p=shortestPath((start:Word)-[*..10]->(end:Word))
+  WHERE start.word <> end.word
+  AND NOT start.word CONTAINS " "
+  AND NOT end.word CONTAINS " "
   RETURN start, end, length(p)
   ORDER BY length(p) DESC
   LIMIT 100
 `);
-// console.log(result);
 
 const words = result.records.map((record) => record.toObject());
-const word = words[Math.floor(Math.random() * words.length)];
+const startOfDay = new Date();
+startOfDay.setHours(0, 0, 0, 0);
+const word = words[startOfDay.getDate() % words.length] || {
+  start: { properties: { word: "human" } },
+  end: { properties: { word: "girl" } },
+}
 
 return new Response(JSON.stringify([word.start.properties.word, word.end.properties.word]));
 };

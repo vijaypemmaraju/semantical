@@ -10,7 +10,7 @@ import { GET } from "./word.json";
   import ky from "ky";
   import copy from "copy-to-clipboard";
 
-  const [word, goal] = await ky.get("./start.json").json<string[]>();
+  const [word, goal] = await ky.get("./start.json", { timeout: 3000 }).json<string[]>();
   document.getElementById("goal")!.innerText = `Find ${goal}`;
   let nodes: { id: string }[] = [];
   let links: { source: string; target: string }[] = [];
@@ -19,6 +19,7 @@ import { GET } from "./word.json";
   let clicks = 0;
   let won = false;
   const onNodeClick = async (node: any) => {
+    node.clicked = true;
     Graph.centerAt(node.x, node.y, 1000);
     const temp = node.id;
     node.loading = true;
@@ -34,9 +35,17 @@ import { GET } from "./word.json";
     }
     lock = true;
     clicks++;
-    const data = await ky.get(`./word.json?word=${temp}`, { timeout: 30000, retry: 3 }).json<{
-      words: string[];
-    }>();
+    let data;
+    try {
+      data = await ky.get(`./word.json?word=${temp}`, { timeout: 1000, retry: 3 }).json<{
+        words: string[];
+      }>();
+    } catch (e) {
+      console.error(e);
+      node.loading = false;
+      lock = false;
+      return [];
+    }
     node.loading = false;
     let newNodes: { id: string }[] = [];
     data.words.forEach((word: string) => {
@@ -89,17 +98,15 @@ import { GET } from "./word.json";
 
   const nodesById: { [id: string]: NodeObject } = {};
 
-  ky.get("./word.json", { searchParams: { word: word }, timeout: 30000, retry: 3 })
+  ky.get("./word.json", { searchParams: { word: word }, timeout: 1000, retry: 3 })
     .then((res) => res.json<{ words: string[] }>())
     .then((data) => {
-      // console.log(data);
       nodes = data.words.map((word) => ({ id: word }));
       links = nodes.map((node) => ({ source: word, target: node.id }));
       nodes.push({ id: word });
       nodes = nodes.filter(
         (node, index, self) => self.findIndex((n) => n.id === node.id) === index
       );
-      // console.log(nodes);
       Graph = ForceGraph()(document.getElementById("graph")!)
         .graphData({
           nodes,
@@ -144,7 +151,7 @@ import { GET } from "./word.json";
 
           ctx.textAlign = "center";
           ctx.textBaseline = "middle";
-          ctx.fillStyle = node.color;
+          ctx.fillStyle = node.clicked ? 'rgba(138, 128, 128, 0.8)' : node.color;
           if (node.loading) {
             const currentTime = Date.now();
             ctx.beginPath();

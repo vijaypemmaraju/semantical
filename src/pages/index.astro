@@ -71,6 +71,7 @@ import { GET } from "./word.json";
     links = links.concat(
       data.words.map((word: string) => ({ source: node.id, target: word }))
     );
+    // if (true) {
     if (nodes.find((n) => n.id === goal && !won)) {
       Graph.zoomToFit(1000, isMobile() ? 100 : 250);
       capturing = true;
@@ -86,8 +87,13 @@ import { GET } from "./word.json";
         const canvas = document.createElement("canvas");
         canvas.width = desiredWidth;
         canvas.height = desiredHeight;
-        canvas
-          .getContext("2d")!
+        // draw background
+        const context = canvas
+          .getContext("2d")!;
+
+          context.fillStyle = "#1d232a";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+        context
           .drawImage(
             originalCanvas,
             0,

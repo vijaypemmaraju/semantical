@@ -72,28 +72,28 @@ import { GET } from "./word.json";
       data.words.map((word: string) => ({ source: node.id, target: word }))
     );
     if (nodes.find((n) => n.id === goal && !won)) {
-      Graph.zoomToFit(1000, isMobile() ? 200 : 400);
+      Graph.zoomToFit(1000, isMobile() ? 100 : 350);
       capturing = true;
       let file: File;
+      Graph.linkWidth(1);
       setTimeout(async () => {
         const originalCanvas = document.querySelector("canvas")!;
-        const desiredWidth = 500;
-        const desiredHeight = 500;
+        const heightToUse = isMobile() ? originalCanvas.height / 2 : originalCanvas.height;
+        const desiredWidth = 500
+        const desiredHeight = desiredWidth * (heightToUse / originalCanvas.width);
+        let startingY = isMobile() ? originalCanvas.height / 4 : 0;
+        let endingY = isMobile() ? 3 * originalCanvas.height / 4 : originalCanvas.height;
         const canvas = document.createElement("canvas");
         canvas.width = desiredWidth;
         canvas.height = desiredHeight;
-        const originalCanvasMidpoint = {
-          x: originalCanvas.width / 2,
-          y: originalCanvas.height / 2,
-        };
         canvas
           .getContext("2d")!
           .drawImage(
             originalCanvas,
-            originalCanvasMidpoint.x - desiredWidth / 2,
-            originalCanvasMidpoint.y - desiredHeight / 2,
-            desiredWidth,
-            desiredHeight,
+            0,
+            startingY,
+            originalCanvas.width,
+            endingY,
             0,
             0,
             desiredWidth,
@@ -106,6 +106,7 @@ import { GET } from "./word.json";
         ).blob();
         file = new File([blob], "graph.png", { type: blob.type });
         capturing = false;
+        Graph.linkWidth(6);
       }, 1000);
       won = true;
       const dialog = document.getElementById("dialog") as HTMLDialogElement;

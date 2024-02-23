@@ -25,17 +25,6 @@ import { GET } from "./word.json";
     Graph.centerAt(node.x, node.y, 1000);
     const temp = node.id;
     node.loading = true;
-    if (lock) {
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          if (!lock) {
-            clearInterval(interval);
-            resolve(null);
-          }
-        }, 100);
-      });
-    }
-    lock = true;
     clicks++;
     let data;
     try {
@@ -53,6 +42,19 @@ import { GET } from "./word.json";
     }
     node.loading = false;
     node.error = false;
+
+    if (lock) {
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (!lock) {
+            clearInterval(interval);
+            resolve(null);
+          }
+        }, 100);
+      });
+    }
+    lock = true;
+
     let newNodes: { id: string }[] = [];
     data.words.forEach((word: string) => {
       const newNode = { id: word };

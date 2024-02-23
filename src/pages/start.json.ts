@@ -25,5 +25,5 @@ export const GET: APIRoute = async ({ url }) => {
   // RETURN n
   // `);
 
-return new Response(JSON.stringify(['human', 'box']));
+return new Response(JSON.stringify(['internet', 'brain']));
 };

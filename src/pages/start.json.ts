@@ -24,23 +24,6 @@ export const GET: APIRoute = async ({ url }) => {
   // DETACH DELETE n
   // RETURN n
   // `);
-  const result = await driver.executeQuery(`
-  MATCH p=shortestPath((start:Word)-[*..10]->(end:Word))
-  WHERE start.word <> end.word
-  AND NOT start.word CONTAINS " "
-  AND NOT end.word CONTAINS " "
-  RETURN start, end, length(p)
-  ORDER BY length(p) DESC
-  LIMIT 100
-`);
 
-const words = result.records.map((record) => record.toObject());
-const startOfDay = new Date();
-startOfDay.setHours(0, 0, 0, 0);
-const word = words[startOfDay.getDate() % words.length] || {
-  start: { properties: { word: "human" } },
-  end: { properties: { word: "girl" } },
-}
-
-return new Response(JSON.stringify([word.start.properties.word, word.end.properties.word]));
+return new Response(JSON.stringify(['human', 'box']));
 };

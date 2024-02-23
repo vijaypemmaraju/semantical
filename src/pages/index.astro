@@ -9,6 +9,7 @@ import { GET } from "./word.json";
   import ForceGraph, { type ForceGraphInstance } from "force-graph";
   import ky from "ky";
   import copy from "copy-to-clipboard";
+  import isMobile from "../util/isMobile";
 
   const [word, goal] = await ky
     .get("./start.json", { timeout: 30000 })
@@ -71,11 +72,39 @@ import { GET } from "./word.json";
       data.words.map((word: string) => ({ source: node.id, target: word }))
     );
     if (nodes.find((n) => n.id === goal && !won)) {
-      Graph.zoomToFit(1000, 250);
+      Graph.zoomToFit(1000, isMobile() ? 200 : 400);
       capturing = true;
-      setTimeout(() => {
-        const png = document.querySelector("canvas")!.toDataURL("image/png");
-        document.getElementById("result")!.setAttribute("src", png);
+      let file: File;
+      setTimeout(async () => {
+        const originalCanvas = document.querySelector("canvas")!;
+        const desiredWidth = 500;
+        const desiredHeight = 500;
+        const canvas = document.createElement("canvas");
+        canvas.width = desiredWidth;
+        canvas.height = desiredHeight;
+        const originalCanvasMidpoint = {
+          x: originalCanvas.width / 2,
+          y: originalCanvas.height / 2,
+        };
+        canvas
+          .getContext("2d")!
+          .drawImage(
+            originalCanvas,
+            originalCanvasMidpoint.x - desiredWidth / 2,
+            originalCanvasMidpoint.y - desiredHeight / 2,
+            desiredWidth,
+            desiredHeight,
+            0,
+            0,
+            desiredWidth,
+            desiredHeight
+          );
+        const imageUrl = canvas!.toDataURL("image/png");
+        document.getElementById("result")!.setAttribute("src", imageUrl);
+        const blob = await (
+          await fetch(document.getElementById("result")?.getAttribute("src")!)
+        ).blob();
+        file = new File([blob], "graph.png", { type: blob.type });
         capturing = false;
       }, 1000);
       won = true;
@@ -83,13 +112,14 @@ import { GET } from "./word.json";
       dialog.showModal();
       document.getElementById("info")!.innerText =
         `You found ${goal} in ${clicks} clicks!`;
-      document.getElementById("share")!.addEventListener("click", () => {
+
+      document.getElementById("share")!.addEventListener("click", async () => {
         let text = `semantical.fun - I found today's word in ${clicks} clicks!`;
-        if (navigator.share) {
+        if (isMobile() && navigator.share) {
           navigator.share({
             title: "I found the word!",
             text,
-            url: window.location.href,
+            files: [file],
           });
         } else {
           console.log("copying to clipboard", text);
@@ -291,14 +321,16 @@ import { GET } from "./word.json";
 <Layout title="Semantical">
   <main>
     <h1 class="absolute p-4 text-3xl text-primary" id="goal"></h1>
-    <div id="graph"><div class="w-[100vw] h-[100vh] flex items-center justify-center">
-      <span class="loading loading-spinner loading-lg"></span>
-    </div></div>
+    <div id="graph">
+      <div class="w-[100vw] h-[100vh] flex items-center justify-center">
+        <span class="loading loading-spinner loading-lg"></span>
+      </div>
+    </div>
     <dialog id="dialog" class="modal">
       <div class="modal-box">
         <h3 class="font-bold text-lg">You win!</h3>
         <p id="info" class="py-4"></p>
-        <img id="result" class="w-full" />
+        <img id="result" />
         <div class="modal-action">
           <form method="dialog">
             <button id="share" class="btn btn-primary">Share</button>

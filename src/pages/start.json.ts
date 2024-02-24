@@ -45,10 +45,10 @@ export const GET: APIRoute = async ({ url }) => {
 
   let distanceBetweenWords = 0;
 
-  let seed = startOfDay.getDate() % words.length;
+  let seed = startOfDay.getTime() % words.length;
 
   let twoRandomWords = words.slice(seed, (seed + 2) % words.length);
-  while (distanceBetweenWords < 10) {
+  while (distanceBetweenWords < 8) {
     twoRandomWords = words.slice(seed, (seed + 2) % words.length);
 
     const result = await driver.executeQuery(

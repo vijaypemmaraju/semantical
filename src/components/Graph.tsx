@@ -7,6 +7,8 @@ import ForceGraph, { type ForceGraphInstance } from "force-graph";
 import isMobile from "../util/isMobile";
 
 const Graph: FC = () => {
+  const { nodes, links, current, graph } = useStore.getState();
+
   const { isLoading } = useQuery("start", async () => {
     const data = await ky
       .get("./start.json", { timeout: 30000 })
@@ -19,7 +21,6 @@ const Graph: FC = () => {
     });
   });
 
-  const { nodes, links, current, graph } = useStore.getState();
 
   const [loaded, setLoaded] = useState(false);
 
@@ -117,13 +118,8 @@ const Graph: FC = () => {
     node.error = false;
     updateGraph();
   };
-  // Graph.graphData({
-  //   nodes,
-  //   links,
-  // });
   useStore.setState({ lock: false });
 
-  // return newNodes;
 
   const { mutateAsync, isLoading: isMutating } = useMutation(
     ["word", current],

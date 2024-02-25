@@ -1,7 +1,8 @@
-import { useRef, type FC, useEffect } from "react";
+import { useRef, type FC, useEffect, useState } from "react";
 import { useStore } from "../store/store";
 import isMobile from "../util/isMobile";
 import copy from "copy-to-clipboard";
+import { intervalToDuration } from "date-fns";
 
 const WonDialog: FC = () => {
   const { won, goal, clicks, imageDataUrl } = useStore();
@@ -14,10 +15,49 @@ const WonDialog: FC = () => {
     }
   }, [won]);
 
+  const [timer, setTimer] = useState(0);
+  useEffect(() => {
+    if (won) {
+      const interval = setInterval(() => {
+        setTimer((prev) => prev + 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [won]);
+
+
+  const now = new Date();
+  const tomorrow = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1
+  );
+  const timeUntilBeginningOfNextDayInSeconds = (tomorrow.getTime() - now.getTime());
+
+  const duration = intervalToDuration({ start: 0, end: timeUntilBeginningOfNextDayInSeconds });
+
+
+  if (duration.hours === 0 && duration.minutes === 0 && duration.seconds === 0) {
+    window.location.reload();
+  }
+
+  let string = "";
+  if (duration.hours && duration.hours > 0) {
+    string += `${duration.hours}:`;
+  }
+  if (duration.minutes && duration.minutes > 0) {
+    string += `${duration.minutes.toString().padStart(2, "0")}:`;
+  }
+
+  if (duration.seconds && duration.seconds > 0) {
+    string += `${duration.seconds.toString().padStart(2, "0")}`;
+  }
+
+
   return (
     <dialog id="dialog" className="modal" ref={dialogRef}>
       <div className="modal-box">
-        <h3 className="font-bold text-lg">You win!</h3>
+        <h3 className="font-bold text-lg">Next word available in {string}</h3>
         <p id="info" className="py-4">
           You found {goal} in {clicks} clicks!
         </p>
@@ -60,6 +100,9 @@ const WonDialog: FC = () => {
               }}
             >
               Share
+            </button>
+            <button className="btn btn-neutral ml-4" onClick={() => dialogRef.current?.close()}>
+              Continue exploring
             </button>
           </form>
         </div>

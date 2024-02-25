@@ -20,6 +20,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "astro": "^4.4.0",
     "copy-to-clipboard": "^3.3.3",
+    "date-fns": "^3.3.1",
     "force-graph": "^1.43.5",
     "ky": "^1.2.0",
     "neo4j-driver": "^5.17.0",
@@ -32,7 +33,7 @@
     "typescript": "^5.3.3",
     "zod": "^3.22.4",
     "zod-to-json-schema": "^3.22.4",
-    "zustand": "^4.5.1"
+    "zustand": "^3.7.1"
   },
   "devDependencies": {
     "daisyui": "^4.7.2"

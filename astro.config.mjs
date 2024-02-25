@@ -12,5 +12,5 @@ export default defineConfig({
       enabled: true
     }
   }),
-  integrations: [tailwind(), react()]
+  integrations: [tailwind(), react()],
 });

@@ -176,12 +176,18 @@ const Graph: FC = () => {
       .nodeAutoColorBy("id")
       .nodeCanvasObject((node: any, ctx, globalScale) => {
         const { won, goal, start: word, capturing } = useStore.getState();
+        node.size ||= 0.8;
+        if (node.hover) {
+          node.size = Math.min(node.size + 0.1, 1.1);
+        } else {
+          node.size = Math.max(node.size - 0.1, 0.8);
+        }
         const label = node.id;
         const fontSize = 18;
         ctx.font = `${fontSize}px Sans-Serif`;
         const textWidth = ctx.measureText(label).width;
         const bckgDimensions = [textWidth, fontSize].map(
-          (n) => n + fontSize * 0.8
+          (n) => n + fontSize * node.size
         ); // some padding
         if (node.hover && !won) {
           ctx.fillStyle = "rgba(255, 255, 255, 0.2)";

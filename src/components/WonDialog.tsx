@@ -94,7 +94,12 @@ const WonDialog: FC = () => {
               id="share"
               className="btn btn-primary"
               onClick={async () => {
-                let text = `semantical.fun - I found today's word in ${clicks} clicks!`;
+                const daysSinceFeb252024 = Math.floor(
+                  (new Date().getTime() - new Date("2024-02-25").getTime()) /
+                  (1000 * 60 * 60 * 24)
+                ) + 1;
+                console.log("days since feb 25 2024", daysSinceFeb252024);
+                let text = `Semantical #${daysSinceFeb252024}\n${clicks} clicks`;
                 if (isMobile() && navigator.share) {
                   const blob = await (
                     await fetch(

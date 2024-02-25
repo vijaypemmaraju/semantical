@@ -49,19 +49,45 @@ const WonDialog: FC = () => {
     string += `${duration.minutes.toString().padStart(2, "0")}:`;
   }
 
-  if (duration.seconds && duration.seconds > 0) {
-    string += `${duration.seconds.toString().padStart(2, "0")}`;
-  }
+  string += `${(duration.seconds || 0).toString().padStart(2, "0")}`;
+
+  const { maxDailyStreak, dailyStreak, totalPlayed } = useStore();
 
 
   return (
     <dialog id="dialog" className="modal" ref={dialogRef}>
-      <div className="modal-box">
+      <div className="modal-box w-11/12 max-w-5xl">
         <h3 className="font-bold text-lg">Next word available in {string}</h3>
-        <p id="info" className="py-4">
-          You found {goal} in {clicks} clicks!
-        </p>
-        <img id="result" src={imageDataUrl} />
+        <div className="stats shadow flex flex-wrap justify-between items-center">
+          <div className="stat place-items-center">
+            <div className="stat-title">Today&apos;s word</div>
+            <div className="stat-value">{goal}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Clicks</div>
+            <div className="stat-value">{clicks}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Streak</div>
+            <div className="stat-value">{dailyStreak}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Max Streak</div>
+            <div className="stat-value">{maxDailyStreak}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Total Played</div>
+            <div className="stat-value">{totalPlayed}</div>
+          </div>
+
+        </div>
+        <div className="flex justify-center">
+          <img id="result" className="h-[250px]" src={imageDataUrl} />
+        </div>
         <div className="modal-action">
           <form method="dialog">
             <button

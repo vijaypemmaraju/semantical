@@ -36,6 +36,7 @@ const Graph: FC = () => {
       console.log("Won!");
       graph!.zoomToFit(1000, isMobile() ? 100 : 250);
       useStore.setState({ capturing: true, won: true });
+      useStore.getState().win();
       //   capturing = true;
       let file: File;
       graph!.linkWidth(3);

@@ -1,12 +1,12 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Card from "../components/Card.astro";
+import App from "../components/App";
 import  SpeedInsights  from "@vercel/speed-insights/astro"
 
 import { GET } from "./word.json";
 ---
 
-<script>
+<!-- <script>
   import ForceGraph, { type ForceGraphInstance } from "force-graph";
   import ky from "ky";
   import copy from "copy-to-clipboard";
@@ -324,12 +324,13 @@ import { GET } from "./word.json";
   };
   (window as any).bfs = bfs;
   // bfs();
-</script>
+</script> -->
 
 <Layout title="Semantical">
   <SpeedInsights />
   <main>
-    <h1 class="absolute p-4 text-3xl text-primary" id="goal"></h1>
+    <App client:only />
+    <!-- <h1 class="absolute p-4 text-3xl text-primary" id="goal"></h1>
     <div id="graph">
       <div class="w-[100vw] h-[100vh] flex items-center justify-center">
         <span class="loading loading-spinner loading-lg"></span>
@@ -346,7 +347,7 @@ import { GET } from "./word.json";
           </form>
         </div>
       </div>
-    </dialog>
+    </dialog> -->
 
     <style>
       main {
@@ -361,3 +362,4 @@ import { GET } from "./word.json";
     </style>
   </main>
 </Layout>
+../components/App.tsx

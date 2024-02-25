@@ -19,7 +19,7 @@ const Graph: FC = () => {
     });
   });
 
-  const { nodes, links, current } = useStore.getState();
+  const { nodes, links, current, graph } = useStore.getState();
 
   const [loaded, setLoaded] = useState(false);
 
@@ -29,74 +29,7 @@ const Graph: FC = () => {
     }
   }, [current]);
 
-  const onNodeClick = async (node: any) => {
-    node.clicked = true;
-    node.loading = true;
-    useStore.setState({ current: node.id });
-    // node.clicked = true;
-    const { graph } = useStore.getState();
-    graph!.centerAt(node.x, node.y, 1000);
-
-    const { lock } = useStore.getState();
-
-    if (lock) {
-      await new Promise((resolve) => {
-        const interval = setInterval(() => {
-          if (!lock) {
-            clearInterval(interval);
-            resolve(null);
-          }
-        }, 100);
-      });
-    }
-    useStore.setState({ lock: true, clicks: useStore.getState().clicks + 1 });
-
-    try {
-      await mutateAsync();
-    } catch (e) {
-      console.error(e);
-      node.loading = false;
-      node.error = true;
-      useStore.setState({ lock: false });
-      return;
-    }
-    // const temp = node.id;
-    // node.loading = true;
-    // clicks++;
-    // let data;
-    // try {
-    //   data = await ky
-    //     .get(`./word.json?word=${temp}`, { timeout: 30000, retry: 3 })
-    //     .json<{
-    //       words: string[];
-    //     }>();
-    // } catch (e) {
-    //   console.error(e);
-    //   node.loading = false;
-    //   node.error = true;
-    //   lock = false;
-    //   return [];
-    // }
-    node.loading = false;
-    node.error = false;
-    updateGraph();
-
-    // let newNodes: { id: string }[] = [];
-    // data.words.forEach((word: string) => {
-    //   const newNode = { id: word };
-    //   newNodes.push(newNode);
-    //   nodes.push(newNode);
-    // });
-    // // dedupe
-    // nodes = nodes.filter(
-    //   (node, index, self) => self.findIndex((n) => n.id === node.id) === index
-    // );
-    // // add links
-    // links = links.concat(
-    //   data.words.map((word: string) => ({ source: node.id, target: word }))
-    // );
-    // // if (true) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
+  useEffect(() => {
     const { nodes, goal, won } = useStore.getState();
     if (nodes.find((n) => n.id === goal && !won)) {
       console.log("Won!");
@@ -145,71 +78,82 @@ const Graph: FC = () => {
         useStore.setState({ imageDataUrl: imageUrl, capturing: false });
         graph!.linkWidth(6);
       }, 1000);
-      //   won = true;
-      //   const dialog = document.getElementById("dialog") as HTMLDialogElement;
-      //   dialog.showModal();
-      //   document.getElementById("info")!.innerText =
-      //     `You found ${goal} in ${clicks} clicks!`;
-
-      //   document.getElementById("share")!.addEventListener("click", async () => {
-      //     let text = `semantical.fun - I found today's word in ${clicks} clicks!`;
-      //     if (isMobile() && navigator.share) {
-      //       navigator.share({
-      //         title: "I found the word!",
-      //         text,
-      //         files: [file],
-      //       });
-      //     } else {
-      //       console.log("copying to clipboard", text);
-      //       setTimeout(() => copy(text), 0);
-      //       const div = document.createElement("div");
-      //       div.innerHTML = `<div role="alert" class="alert alert-info absolute top-0 right-0 m-4 p-4 bg-blue-100 text-blue-900 rounded-lg flex items-center space-x-2 w-[50vw]">
-      //   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      //   <span>Copied to clipboard.</span>
-      // </div>`;
-
-      //       document.querySelector("main")!.appendChild(div);
-      //       setTimeout(() => {
-      //         div.remove();
-      //       }, 3000);
-      //     }
-      //   });
     }
-    // Graph.graphData({
-    //   nodes,
-    //   links,
-    // });
-    useStore.setState({ lock: false });
+  }, [nodes]);
 
-    // return newNodes;
-  };
+  const onNodeClick = async (node: any) => {
+    node.clicked = true;
+    node.loading = true;
+    useStore.setState({ current: node.id });
+    // node.clicked = true;
+    const { graph } = useStore.getState();
+    graph!.centerAt(node.x, node.y, 1000);
 
-  const { mutateAsync, isLoading: isMutating } = useMutation(["word", current], async () => {
-    const data = await ky
-      .get(`./word.json?word=${current}`, { timeout: 30000 })
-      .json<{ words: string[] }>();
+    try {
+      await mutateAsync();
+    } catch (e) {
+      console.error(e);
+      node.loading = false;
+      node.error = true;
+      useStore.setState({ lock: false });
+      return;
+    }
 
-    let { nodes, links } = useStore.getState();
-    let newNodes: { id: string }[] = [];
-    data.words.forEach((word: string) => {
-      const newNode = { id: word };
-      newNodes.push(newNode);
-      nodes.push(newNode);
-    });
+    const { lock } = useStore.getState();
 
-    // dedupe
-    nodes = nodes.filter(
-      (node, index, self) => self.findIndex((n) => n.id === node.id) === index
-    );
-    // add links
-    links = links.concat(
-      data.words.map((word: string) => ({ source: current, target: word }))
-    );
+    if (lock) {
+      await new Promise((resolve) => {
+        const interval = setInterval(() => {
+          if (!lock) {
+            clearInterval(interval);
+            resolve(null);
+          }
+        }, 100);
+      });
+    }
+    useStore.setState({ lock: true, clicks: useStore.getState().clicks + 1 });
 
-    useStore.setState({ nodes, links });
+    node.loading = false;
+    node.error = false;
     updateGraph();
-    setLoaded(true);
-  });
+  };
+  // Graph.graphData({
+  //   nodes,
+  //   links,
+  // });
+  useStore.setState({ lock: false });
+
+  // return newNodes;
+
+  const { mutateAsync, isLoading: isMutating } = useMutation(
+    ["word", current],
+    async () => {
+      const data = await ky
+        .get(`./word.json?word=${current}`, { timeout: 30000 })
+        .json<{ words: string[] }>();
+
+      let { nodes, links } = useStore.getState();
+      let newNodes: { id: string }[] = [];
+      data.words.forEach((word: string) => {
+        const newNode = { id: word };
+        newNodes.push(newNode);
+        nodes.push(newNode);
+      });
+
+      // dedupe
+      nodes = nodes.filter(
+        (node, index, self) => self.findIndex((n) => n.id === node.id) === index
+      );
+      // add links
+      links = links.concat(
+        data.words.map((word: string) => ({ source: current, target: word }))
+      );
+
+      useStore.setState({ nodes, links });
+      updateGraph();
+      setLoaded(true);
+    }
+  );
 
   const graphRef = useRef<HTMLDivElement>(null);
 
@@ -344,7 +288,7 @@ const Graph: FC = () => {
 
   return (
     <>
-      {(!loaded) && (
+      {!loaded && (
         <div className="w-[100vw] h-[100vh] flex items-center justify-center">
           <span className="loading loading-spinner loading-lg"></span>
         </div>
@@ -353,7 +297,7 @@ const Graph: FC = () => {
         id="graph"
         ref={graphRef}
         className="w-full h-full"
-        style={{ display: (!loaded) ? "none" : "block" }}
+        style={{ display: !loaded ? "none" : "block" }}
       ></div>
     </>
   );

@@ -7,11 +7,11 @@ import { intervalToDuration } from "date-fns";
 const WonDialog: FC = () => {
   const { won, goal, clicks, imageDataUrl } = useStore();
 
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     if (won) {
-      dialogRef.current?.showModal();
+      setOpen(true);
     }
   }, [won]);
 
@@ -70,7 +70,7 @@ const WonDialog: FC = () => {
   }
 
   return (
-    <dialog id="dialog" className={`modal ${won ? "modal-open" : ""}`} ref={dialogRef}>
+    <dialog id="dialog" className={`modal ${open ? "modal-open" : ""}`}>
       <div className="modal-box w-11/12 max-w-5xl max-h-[100vh]">
         <h3 className="font-bold text-lg">Next word available in {string}</h3>
         <div className="stats shadow flex flex-wrap justify-between items-center">
@@ -157,7 +157,7 @@ const WonDialog: FC = () => {
             >
               Share
             </button>
-            <button className="btn btn-neutral ml-4" onClick={() => dialogRef.current?.close()}>
+            <button className="btn btn-neutral ml-4" onClick={() => setOpen(false)}>
               Continue exploring
             </button>
           </form>

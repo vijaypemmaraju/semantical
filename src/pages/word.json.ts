@@ -46,8 +46,14 @@ const executeQueryAndReturnWords = async (query: string, params: any) => {
   return extractWordsFromRecords(records);
 };
 
+const cache = new Map<string, string[]>();
+
 export const GET: APIRoute = async ({ url }) => {
   const word = url.searchParams.get("word");
+
+  if (cache.has(word!)) {
+    return new Response(JSON.stringify({ words: cache.get(word!) }));
+  }
 
   const words = await executeQueryAndReturnWords(
     `MATCH (n:Word)-[:ASSOCIATED_WITH]->(p:Word) WHERE n.word = $word RETURN p`,
@@ -112,9 +118,10 @@ export const GET: APIRoute = async ({ url }) => {
         { word: newWord, input: word }
       );
     }
-
+    cache.set(word!, output);
     return new Response(JSON.stringify({ words: output }));
   } else {
+    cache.set(word!, combinedWords);
     return new Response(JSON.stringify({ words: combinedWords }));
   }
 };

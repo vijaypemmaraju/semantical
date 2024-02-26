@@ -41,6 +41,7 @@ export const GET: APIRoute = async ({ url }) => {
   const result = await driver.executeQuery(`
   MATCH (p)
   RETURN p
+  ORDER BY p.created_at ASC
 `);
 
   const words = result.records.map(

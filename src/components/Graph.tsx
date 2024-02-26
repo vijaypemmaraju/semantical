@@ -11,7 +11,7 @@ const Graph: FC = () => {
 
   const { isLoading } = useQuery("start", async () => {
     const data = await ky
-      .get("./start.json", { timeout: 30000 })
+      .get("./start.json", { timeout: 30000, searchParams: { date: new Date().toISOString() } })
       .json<string[]>();
     useStore.setState({
       start: data[0],

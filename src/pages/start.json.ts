@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ url }) => {
     throw new Error("Driver is not initialized");
   }
 
-  const startOfDay = new Date();
+  const startOfDay = new Date(url.searchParams.get("date") || Date.now());
   startOfDay.setHours(0, 0, 0, 0);
 
   if (cache.has(startOfDay.getDate())) {

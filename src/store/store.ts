@@ -117,10 +117,7 @@ if (lastCompletedDay && lastCompletedDay !== new Date().toLocaleDateString()) {
   if (duration.days && duration.days > 1) {
     useStore.setState({ dailyStreak: 0 });
   }
-} else if (
-  lastCompletedDay === new Date().toLocaleDateString() &&
-  !useStore.getState().won
-) {
+} else if (!useStore.getState().won) {
   useStore.getState().resetDaily();
 }
 

@@ -206,14 +206,25 @@ const Graph: FC = () => {
           bckgDimensions[0],
           bckgDimensions[1]
         );
+
+        const pathUpToIndex = useStore.getState().path.slice(
+          0,
+          useStore.getState().pathIndex + 1
+        );
+
+
         // draw border around rect
         if (node.id === goal) {
           ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
         } else if (node.id === word) {
           ctx.strokeStyle = "rgba(55, 255, 55, 0.8)";
+        } else if (pathUpToIndex.includes(node.id)) {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
         } else {
           ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
         }
+
+
         ctx.strokeRect(
           node.x! - bckgDimensions[0] / 2,
           node.y! - bckgDimensions[1] / 2,

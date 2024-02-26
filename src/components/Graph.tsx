@@ -14,11 +14,10 @@ type Start = {
 const Graph: FC = () => {
   const { nodes, links, current, graph } = useStore.getState();
 
-  const { isLoading } = useQuery("start", async () => {
+  useQuery("start", async () => {
     const data = await ky
       .get("./start.json", { timeout: 30000, searchParams: { date: new Date().toISOString() } })
       .json<Start>();
-    console.log(data);
     useStore.setState({
       start: data.words[0],
       current: data.words[0],
@@ -54,7 +53,6 @@ const Graph: FC = () => {
   useEffect(() => {
     const { nodes, goal, won } = useStore.getState();
     if (nodes.find((n) => n.id === goal && !won)) {
-      console.log("Won!");
       graph!.zoomToFit(1000, isMobile() ? 100 : 250);
       useStore.setState({ capturing: true, won: true });
       useStore.getState().win();
@@ -176,7 +174,6 @@ const Graph: FC = () => {
   const graphRef = useRef<HTMLDivElement>(null);
 
   const initializeGraph = async () => {
-    console.log("Creating graph");
     await new Promise((resolve) => {
       const interval = setInterval(() => {
         if (graphRef.current) {
@@ -285,7 +282,6 @@ const Graph: FC = () => {
         }
       })
       .onNodeDragEnd((node, translate) => {
-        console.log(node, translate);
         // if translate is small enough, consider it a click
         if (Math.abs(translate.x) < 10 && Math.abs(translate.y) < 10) {
           onNodeClick(node);

@@ -42,6 +42,7 @@ export const GET: APIRoute = async ({ url }) => {
   MATCH (p)
   RETURN p
   ORDER BY p.created_at ASC
+  LIMIT 3000
 `);
 
   const words = result.records.map(

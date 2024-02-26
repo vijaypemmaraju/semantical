@@ -73,7 +73,7 @@ export const GET: APIRoute = async ({ url }) => {
     shortestPath =
       result.records[0]
         ?.get("path")
-        .segments.map((segment) => segment.start.properties.word) || [];
+        .segments.map((segment: any) => segment.start.properties.word) || [];
     console.log(twoRandomWords, distanceBetweenWords.toString(), shortestPath);
   }
 

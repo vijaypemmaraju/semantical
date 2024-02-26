@@ -57,13 +57,13 @@ const WonDialog: FC = () => {
 
   if (clicks - path.length === 0) {
     grade = "S"
-  } else if (clicks - path.length < 2) {
-    grade = "A";
   } else if (clicks - path.length < 6) {
-    grade = "B";
+    grade = "A";
   } else if (clicks - path.length < 10) {
-    grade = "C";
+    grade = "B";
   } else if (clicks - path.length < 15) {
+    grade = "C";
+  } else if (clicks - path.length < 25) {
     grade = "D";
   } else {
     grade = "E";

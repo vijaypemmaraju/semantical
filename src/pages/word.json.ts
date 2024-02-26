@@ -89,14 +89,20 @@ export const GET: APIRoute = async ({ url }) => {
         new Set(JSON.parse(extract.choices[0].message.content!).words)
       ) as string[]
     ).map((word) => word?.replaceAll("_", " "));
-    driver.executeQuery("MERGE (n:Word {word: $word}) RETURN n", {
-      word: word?.replaceAll("_", " "),
-    });
+    driver.executeQuery(
+      "MERGE (n:Word {word: $word, created_at: TIMESTAMP()}) RETURN n",
+      {
+        word: word?.replaceAll("_", " "),
+      }
+    );
     for (let newWord of output) {
       if (word === newWord) continue;
-      driver.executeQuery("MERGE (n:Word {word: $word}) RETURN n", {
-        word: newWord,
-      });
+      driver.executeQuery(
+        "MERGE (n:Word {word: $word, created_at: TIMESTAMP()}) RETURN n",
+        {
+          word: newWord,
+        }
+      );
       await driver.executeQuery(
         `MATCH (n:Word {word: $input}), (p:Word {word: $word}) MERGE (n)-[:ASSOCIATED_WITH]->(p) RETURN p`,
         { word: newWord, input: word }

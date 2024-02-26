@@ -23,6 +23,9 @@ type Store = {
   totalPlayed: number;
   maxDailyStreak: number;
   lastCompletedDay: string | null;
+  path: string[];
+  pathIndex: number;
+  hintsLeft: number;
   win: () => void;
   resetDaily: () => void;
   resetFull: () => void;
@@ -46,6 +49,9 @@ export const useStore = create<Store>(
       totalPlayed: 0,
       maxDailyStreak: 0,
       lastCompletedDay: null,
+      path: [],
+      pathIndex: 0,
+      hintsLeft: 3,
       win: () => {
         set((state) => ({
           won: true,
@@ -61,6 +67,9 @@ export const useStore = create<Store>(
           won: false,
           clicks: 0,
           imageDataUrl: "",
+          path: [],
+          pathIndex: 0,
+          hintsLeft: 3,
         }));
       },
       resetFull: () => {
@@ -68,6 +77,9 @@ export const useStore = create<Store>(
           won: false,
           clicks: 0,
           imageDataUrl: "",
+          path: [],
+          pathIndex: 0,
+          hintsLeft: 3,
           dailyStreak: 0,
           lastCompletedDay: null,
           totalPlayed: 0,
@@ -105,8 +117,15 @@ if (lastCompletedDay && lastCompletedDay !== new Date().toLocaleDateString()) {
   if (duration.days && duration.days > 1) {
     useStore.setState({ dailyStreak: 0 });
   }
+} else if (
+  lastCompletedDay === new Date().toLocaleDateString() &&
+  !useStore.getState().won
+) {
+  useStore.getState().resetDaily();
 }
 
+(window as any).useStore = useStore;
+
 useStore.subscribe((state) => {
-  console.log("New state", state);
+  // console.log("New state", state);
 });

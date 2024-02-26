@@ -5,7 +5,7 @@ import WonDialog from "./WonDialog";
 import { useStore } from "../store/store";
 import Goal from "./Goal";
 
-const client = new QueryClient({
+export const client = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,

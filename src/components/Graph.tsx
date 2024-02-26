@@ -1,10 +1,15 @@
 import { useEffect, type FC, useState, useRef } from "react";
 import { ForceGraph2D } from "react-force-graph";
 import { useStore } from "../store/store";
-import { useMutation, useQuery } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import ky from "ky";
 import ForceGraph, { type ForceGraphInstance } from "force-graph";
 import isMobile from "../util/isMobile";
+
+type Start = {
+  words: string[];
+  path: string[];
+}
 
 const Graph: FC = () => {
   const { nodes, links, current, graph } = useStore.getState();
@@ -12,12 +17,14 @@ const Graph: FC = () => {
   const { isLoading } = useQuery("start", async () => {
     const data = await ky
       .get("./start.json", { timeout: 30000, searchParams: { date: new Date().toISOString() } })
-      .json<string[]>();
+      .json<Start>();
+    console.log(data);
     useStore.setState({
-      start: data[0],
-      current: data[0],
-      goal: data[1],
-      nodes: [{ id: data[0] }],
+      start: data.words[0],
+      current: data.words[0],
+      goal: data.words[1],
+      nodes: [{ id: data.words[0] }],
+      path: data.path,
     });
   });
 
@@ -29,6 +36,8 @@ const Graph: FC = () => {
       mutateAsync();
     }
   }, [current]);
+
+  const client = useQueryClient();
 
   useEffect(() => {
     const { nodes, goal, won } = useStore.getState();
@@ -215,7 +224,9 @@ const Graph: FC = () => {
         ctx.textBaseline = "middle";
         ctx.fillStyle = node.clicked ? "rgba(138, 128, 128, 0.8)" : node.color;
         ctx.fillStyle = node.error ? "rgba(255, 0, 0, 0.8)" : ctx.fillStyle;
-        if (node.loading) {
+        if (node.id === useStore.getState().current && client.isMutating({
+          mutationKey: ["word", node.id]
+        })) {
           const currentTime = Date.now();
           ctx.beginPath();
           ctx.arc(
@@ -237,7 +248,7 @@ const Graph: FC = () => {
       })
       .onNodeClick(onNodeClick)
       .linkWidth(6)
-      .zoom(/* check mobile */ window.innerWidth < 600 ? 1.5 : 1)
+      .zoom(/* check mobile */ window.innerWidth < 600 ? 1.2 : 1)
       .linkColor(() => "rgba(128, 128, 256, 0.2)")
       .linkDirectionalParticles(2)
       .linkCurvature(0.25)
@@ -289,11 +300,34 @@ const Graph: FC = () => {
     }
   };
 
+  const hintsLeft = useStore.getState().hintsLeft;
+
   return (
     <>
       {!loaded && (
         <div className="w-[100vw] h-[100vh] flex items-center justify-center">
           <span className="loading loading-spinner loading-lg"></span>
+        </div>
+      )}
+      {loaded && hintsLeft > 0 && (
+        <div className="absolute top-0 right-0 p-4 flex space-x-4 z-[999]">
+          <button className="btn btn-primary" onClick={() => {
+            const path = useStore.getState().path;
+            const nodes = useStore.getState().nodes;
+            for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
+              if (nodes.find(n => n.id === path[i])) {
+                useStore.setState({
+                  pathIndex: i,
+                  current: path[i],
+                  hintsLeft: hintsLeft - 1
+                });
+                onNodeClick(useStore.getState().nodes.find(n => n.id === path[i]));
+                return;
+              }
+            }
+          }}>
+            Hint ({hintsLeft} left)
+          </button>
         </div>
       )}
       <div

@@ -3,7 +3,12 @@ import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import driver from "../db/driver";
 
-const cache = new Map<number, string[]>();
+type Start = {
+  words: string[];
+  path: string[];
+};
+
+const cache = new Map<number, Start>();
 
 // Defining the schema we want our data in
 const actionItemsSchema = z.object({
@@ -36,7 +41,6 @@ export const GET: APIRoute = async ({ url }) => {
   const result = await driver.executeQuery(`
   MATCH (p)
   RETURN p
-  LIMIT 3000
 `);
 
   const words = result.records.map(
@@ -45,29 +49,37 @@ export const GET: APIRoute = async ({ url }) => {
 
   let distanceBetweenWords = 0;
 
-  let seed = Math.pow(startOfDay.getTime(), 2) % words.length;
+  let seed = Math.pow(startOfDay.getTime(), 1) % words.length;
 
   let twoRandomWords = words.slice(seed, (seed + 2) % words.length);
-  while (distanceBetweenWords < 8) {
+  let shortestPath = [];
+  while (distanceBetweenWords < 8 || distanceBetweenWords > 12) {
     twoRandomWords = words.slice(seed, (seed + 2) % words.length);
 
     const result = await driver.executeQuery(
       `
-    MATCH (n:Word {word: $word1}), (p:Word {word: $word2})
+    MATCH (n:Word {word: $word1}), (p:Word {word: $word2}),
+    path = shortestPath((n)-[*]-(p))
     WHERE n <> p
-    RETURN length(shortestPath((n)-[*]-(p))) AS score
+    RETURN length(path) as score, path
   `,
       {
         word1: twoRandomWords[0],
         word2: twoRandomWords[1],
       }
     );
-    distanceBetweenWords = result.records[0].get("score");
-    seed = (seed + 1) % words.length;
-    console.log(twoRandomWords, distanceBetweenWords.toString());
+    distanceBetweenWords = Number(result.records[0]?.get("score")) || Infinity;
+    seed = (seed + 100) % words.length;
+    shortestPath =
+      result.records[0]
+        ?.get("path")
+        .segments.map((segment) => segment.start.properties.word) || [];
+    console.log(twoRandomWords, distanceBetweenWords.toString(), shortestPath);
   }
 
-  cache.set(startOfDay.getDate(), twoRandomWords);
+  const final = { words: twoRandomWords, path: shortestPath };
 
-  return new Response(JSON.stringify(twoRandomWords));
+  cache.set(startOfDay.getDate(), final);
+
+  return new Response(JSON.stringify(final));
 };

@@ -51,12 +51,27 @@ const WonDialog: FC = () => {
 
   string += `${(duration.seconds || 0).toString().padStart(2, "0")}`;
 
-  const { maxDailyStreak, dailyStreak, totalPlayed } = useStore();
+  const { maxDailyStreak, dailyStreak, totalPlayed, path, hintsLeft } = useStore();
 
+  let grade: string;
+
+  if (clicks - path.length === 0) {
+    grade = "S"
+  } else if (clicks - path.length < 2) {
+    grade = "A";
+  } else if (clicks - path.length < 6) {
+    grade = "B";
+  } else if (clicks - path.length < 10) {
+    grade = "C";
+  } else if (clicks - path.length < 15) {
+    grade = "D";
+  } else {
+    grade = "E";
+  }
 
   return (
-    <dialog id="dialog" className="modal" ref={dialogRef}>
-      <div className="modal-box w-11/12 max-w-5xl">
+    <dialog id="dialog" className={`modal ${won ? "modal-open" : ""}`} ref={dialogRef}>
+      <div className="modal-box w-11/12 max-w-5xl max-h-[100vh]">
         <h3 className="font-bold text-lg">Next word available in {string}</h3>
         <div className="stats shadow flex flex-wrap justify-between items-center">
           <div className="stat place-items-center">
@@ -67,6 +82,16 @@ const WonDialog: FC = () => {
           <div className="stat place-items-center flex-[0.5]">
             <div className="stat-title">Clicks</div>
             <div className="stat-value">{clicks}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Grade</div>
+            <div className="stat-value">{grade}</div>
+          </div>
+
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Hints used</div>
+            <div className="stat-value">{3 - hintsLeft}</div>
           </div>
 
           <div className="stat place-items-center flex-[0.5]">
@@ -99,7 +124,7 @@ const WonDialog: FC = () => {
                   (1000 * 60 * 60 * 24)
                 ) + 1;
                 console.log("days since feb 25 2024", daysSinceFeb252024);
-                let text = `Semantical #${daysSinceFeb252024}\n${clicks} clicks`;
+                let text = `Semantical #${daysSinceFeb252024}\n${clicks} clicks\nGrade: ${grade}`;
                 if (isMobile() && navigator.share) {
                   const blob = await (
                     await fetch(

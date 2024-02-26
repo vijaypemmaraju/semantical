@@ -37,6 +37,18 @@ const Graph: FC = () => {
     }
   }, [current]);
 
+  useEffect(() => {
+    const resize = () => {
+      const graph = useStore.getState().graph;
+      if (graph) {
+        graph.width(window.innerWidth);
+        graph.height(window.innerHeight);
+      }
+    }
+    window.addEventListener("resize", resize);
+    return () => window.removeEventListener("resize", resize);
+  }, []);
+
   const client = useQueryClient();
 
   useEffect(() => {

@@ -124,7 +124,7 @@ const WonDialog: FC = () => {
                   (1000 * 60 * 60 * 24)
                 ) + 1;
                 console.log("days since feb 25 2024", daysSinceFeb252024);
-                let text = `#Semantical ${daysSinceFeb252024}\n${clicks} clicks\nGrade: ${grade}`;
+                let text = `#Semantical ${daysSinceFeb252024}\n${clicks} clicks\nGrade: ${grade}\nHints used: ${3 - hintsLeft}\n\nFind today's word at https://www.semantical.fun`;
                 if (isMobile() && navigator.share) {
                   const blob = await (
                     await fetch(

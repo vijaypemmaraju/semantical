@@ -51,7 +51,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   let distanceBetweenWords = 0;
 
-  let seed = Math.pow(startOfDay.getTime(), 1) % words.length;
+  let seed = Math.pow(startOfDay.getTime(), 2) % words.length;
 
   let twoRandomWords = words.slice(seed, (seed + 2) % words.length);
   let shortestPath = [];

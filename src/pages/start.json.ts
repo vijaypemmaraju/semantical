@@ -51,12 +51,12 @@ export const GET: APIRoute = async ({ url }) => {
 
   let distanceBetweenWords = 0;
 
-  let seed = Math.pow(startOfDay.getTime(), 2) % words.length;
+  let seed = Math.pow(startOfDay.getTime(), 2) % 3000;
 
-  let twoRandomWords = words.slice(seed, (seed + 2) % words.length);
+  let twoRandomWords = words.slice(seed, (seed + 2) % 3000);
   let shortestPath = [];
   while (distanceBetweenWords < 8 || distanceBetweenWords > 12) {
-    twoRandomWords = words.slice(seed, (seed + 2) % words.length);
+    twoRandomWords = words.slice(seed, (seed + 2) % 3000);
 
     const result = await driver.executeQuery(
       `
@@ -71,7 +71,7 @@ export const GET: APIRoute = async ({ url }) => {
       }
     );
     distanceBetweenWords = Number(result.records[0]?.get("score")) || Infinity;
-    seed = (seed + 100) % words.length;
+    seed = (seed + 100) % 3000;
     shortestPath =
       result.records[0]
         ?.get("path")

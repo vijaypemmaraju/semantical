@@ -24,11 +24,10 @@ export const GET: APIRoute = async ({ url }) => {
     throw new Error("Driver is not initialized");
   }
 
-  const startOfDay = new Date(url.searchParams.get("date") || Date.now());
-  startOfDay.setHours(0, 0, 0, 0);
+  let seed = parseInt(url.searchParams.get("seed")!, 10);
 
-  if (cache.has(startOfDay.getDate())) {
-    return new Response(JSON.stringify(cache.get(startOfDay.getDate())));
+  if (cache.has(seed)) {
+    return new Response(JSON.stringify(cache.get(seed)));
   }
 
   // find and delete all nodes that contain a _
@@ -51,7 +50,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   let distanceBetweenWords = 0;
 
-  let seed = Math.pow(startOfDay.getTime(), 2) % 3000;
+  seed = Math.pow(seed, 2) % 3000;
 
   let twoRandomWords = words.slice(seed, (seed + 2) % 3000);
   let shortestPath = [];
@@ -81,7 +80,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   const final = { words: twoRandomWords, path: shortestPath };
 
-  cache.set(startOfDay.getDate(), final);
+  cache.set(seed, final);
 
   return new Response(JSON.stringify(final));
 };

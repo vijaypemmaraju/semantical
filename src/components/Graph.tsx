@@ -15,8 +15,10 @@ const Graph: FC = () => {
   const { nodes, links, current, graph } = useStore.getState();
 
   useQuery("start", async () => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
     const data = await ky
-      .get("./start.json", { timeout: 30000, searchParams: { date: new Date().toISOString() } })
+      .get("./start.json", { timeout: 30000, searchParams: { seed: date.getTime() } })
       .json<Start>();
     useStore.setState({
       start: data.words[0],

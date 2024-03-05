@@ -1,10 +1,10 @@
 import { useEffect, type FC, useState, useRef } from "react";
-import { ForceGraph2D } from "react-force-graph";
-import { useStore } from "../store/store";
+import { useStore, type Mode } from "../store/store";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import ky from "ky";
-import ForceGraph, { type ForceGraphInstance } from "force-graph";
+import ForceGraph from "force-graph";
 import isMobile from "../util/isMobile";
+import { startOfDay } from "date-fns";
 
 type Start = {
   words: string[];
@@ -13,10 +13,10 @@ type Start = {
 
 const Graph: FC = () => {
   const { nodes, links, current, graph } = useStore.getState();
+  const mode = useStore((state) => state.mode);
 
-  useQuery("start", async () => {
-    const date = new Date();
-    date.setHours(0, 0, 0, 0);
+  useQuery(["start", mode], async () => {
+    const date = mode === 'daily' ? startOfDay(new Date()) : new Date();
     const data = await ky
       .get("./start.json", { timeout: 30000, searchParams: { seed: date.getTime() } })
       .json<Start>();
@@ -321,7 +321,7 @@ const Graph: FC = () => {
     }
   };
 
-  const hintsLeft = useStore.getState().hintsLeft;
+  const hintsLeft = useStore((state) => state.hintsLeft);
 
   return (
     <>
@@ -332,23 +332,33 @@ const Graph: FC = () => {
       )}
       {loaded && hintsLeft > 0 && (
         <div className="absolute top-0 right-0 p-4 flex space-x-4 z-[999]">
-          <button className="btn btn-primary" onClick={() => {
-            const path = useStore.getState().path;
-            const nodes = useStore.getState().nodes;
-            for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
-              if (nodes.find(n => n.id === path[i])) {
-                useStore.setState({
-                  pathIndex: i,
-                  current: path[i],
-                  hintsLeft: hintsLeft - 1
-                });
-                onNodeClick(useStore.getState().nodes.find(n => n.id === path[i]));
-                return;
+          <div className="flex gap-4">
+            <select className="w-full max-w-xs select select-bordered" value={mode} onChange={(e) => {
+              useStore.getState().graph?.graphData({ nodes: [], links: [] });
+              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goal: "", path: [], hintsLeft: 99, clicks: 0 });
+              setLoaded(false);
+            }}>
+              <option value="daily">Daily</option>
+              <option value="unlimited">Unlimited</option>
+            </select>
+            <button className="btn btn-primary" onClick={() => {
+              const path = useStore.getState().path;
+              const nodes = useStore.getState().nodes;
+              for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
+                if (nodes.find(n => n.id === path[i])) {
+                  useStore.setState({
+                    pathIndex: i,
+                    current: path[i],
+                    hintsLeft: hintsLeft - 1
+                  });
+                  onNodeClick(useStore.getState().nodes.find(n => n.id === path[i]));
+                  return;
+                }
               }
-            }
-          }}>
-            Hint ({hintsLeft} left)
-          </button>
+            }}>
+              Hint ({hintsLeft} left)
+            </button>
+          </div>
         </div>
       )}
       <div

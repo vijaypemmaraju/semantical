@@ -51,7 +51,7 @@ const WonDialog: FC = () => {
 
   string += `${(duration.seconds || 0).toString().padStart(2, "0")}`;
 
-  const { maxDailyStreak, dailyStreak, totalPlayed, path, hintsLeft } = useStore();
+  const { maxDailyStreak, dailyStreak, totalPlayed, path, hintsLeft, mode } = useStore();
 
   let grade: string;
 
@@ -72,8 +72,8 @@ const WonDialog: FC = () => {
   return (
     <dialog id="dialog" className={`modal ${open ? "modal-open" : ""}`}>
       <div className="modal-box w-11/12 max-w-5xl max-h-[100vh]">
-        <h3 className="font-bold text-lg">Next word available in {string}</h3>
-        <div className="stats shadow flex flex-wrap justify-between items-center">
+        <h3 className="text-lg font-bold">Next word available in {string}</h3>
+        <div className="flex flex-wrap items-center justify-between shadow stats">
           <div className="stat place-items-center">
             <div className="stat-title">Today&apos;s word</div>
             <div className="stat-value">{goal}</div>
@@ -115,7 +115,7 @@ const WonDialog: FC = () => {
         </div>
         <div className="modal-action">
           <form method="dialog">
-            <button
+            {mode === 'daily' && <button
               id="share"
               className="btn btn-primary"
               onClick={async () => {
@@ -156,9 +156,16 @@ const WonDialog: FC = () => {
               }}
             >
               Share
-            </button>
-            <button className="btn btn-neutral ml-4" onClick={() => setOpen(false)}>
-              Continue exploring
+            </button>}
+            <button className={"ml-4 btn " + (mode === "daily" ? "btn-neutral" : " btn-primary")}
+              onClick={() => {
+                if (mode === "daily") {
+                  setOpen(false)
+                } else {
+                  window.location.reload();
+                }
+              }}>
+              {mode === "daily" ? "Continue Exploring" : "Play again"}
             </button>
           </form>
         </div>

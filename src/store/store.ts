@@ -7,8 +7,11 @@ import {
 } from "force-graph";
 import { intervalToDuration } from "date-fns";
 
+export type Mode = "daily" | "unlimited";
+
 type Store = {
   graph: ForceGraphInstance | null;
+  mode: Mode;
   nodes: NodeObject[];
   links: LinkObject[];
   won: boolean;
@@ -36,6 +39,7 @@ export const useStore = create<Store>(
     (set, get) => ({
       graph: null,
       nodes: [],
+      mode: "daily",
       links: [],
       won: false,
       start: "",
@@ -91,6 +95,7 @@ export const useStore = create<Store>(
       name: "store",
       whitelist: [
         "dailyStreak",
+        "mode",
         "totalPlayed",
         "maxDailyStreak",
         "lastCompletedDay",
@@ -103,7 +108,12 @@ export const useStore = create<Store>(
 );
 
 const lastCompletedDay = useStore.getState().lastCompletedDay;
-if (lastCompletedDay && lastCompletedDay !== new Date().toLocaleDateString()) {
+if (useStore.getState().mode === "unlimited") {
+  useStore.getState().resetDaily();
+} else if (
+  lastCompletedDay &&
+  lastCompletedDay !== new Date().toLocaleDateString()
+) {
   useStore.getState().resetDaily();
   const currentDay = new Date().toLocaleDateString();
   const lastCompletedDay = useStore.getState().lastCompletedDay;

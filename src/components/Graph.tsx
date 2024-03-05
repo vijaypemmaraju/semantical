@@ -76,7 +76,7 @@ const Graph: FC = () => {
 
   useEffect(() => {
     const { nodes, goals, found, won } = useStore.getState();
-    if (found.length === 1 && !won) {
+    if (found.length === goals.length && !won) {
       graph!.zoomToFit(1000, isMobile() ? 100 : 250);
       useStore.setState({ capturing: true, won: true });
       useStore.getState().win();

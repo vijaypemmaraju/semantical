@@ -302,7 +302,7 @@ const Graph: FC = () => {
           );
       });
     Graph.d3Force("link")?.distance(() => {
-      return 125;
+      return 150;
     });
     Graph.d3Force("charge")!.strength(-100);
     Graph.d3Force("center", null);

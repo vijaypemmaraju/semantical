@@ -5,7 +5,8 @@ import copy from "copy-to-clipboard";
 import { intervalToDuration } from "date-fns";
 
 const WonDialog: FC = () => {
-  const { won, goal, clicks, imageDataUrl } = useStore();
+  const { won, goals, clicks, imageDataUrl } = useStore();
+  const goal = goals[0];
 
   const [open, setOpen] = useState(false);
 
@@ -79,27 +80,35 @@ const WonDialog: FC = () => {
   return (
     <dialog id="dialog" className={`modal ${open ? "modal-open" : ""}`}>
       <div className="modal-box w-11/12 max-w-5xl max-h-[100vh]">
-        <h3 className="text-lg font-bold">Next word available in {string}</h3>
-        <div className="flex flex-wrap items-center justify-between shadow stats">
-          <div className="stat place-items-center">
-            <div className="stat-title">Today&apos;s word</div>
-            <div className="stat-value">{goal}</div>
-          </div>
+        {mode === "daily" && (
+          <h3 className="text-lg font-bold">Next word available in {string}</h3>
+        )}
+        <div className="flex flex-wrap items-center justify-between w-11/12 shadow stats">
+          {mode === "daily" && (
+            <div className="stat place-items-center">
+              <div className="stat-title">Today&apos;s word</div>
+              <div className="stat-value">{goal}</div>
+            </div>
+          )}
 
           <div className="stat place-items-center flex-[0.5]">
             <div className="stat-title">Clicks</div>
             <div className="stat-value">{clicks}</div>
           </div>
 
-          <div className="stat place-items-center flex-[0.5]">
-            <div className="stat-title">Grade</div>
-            <div className="stat-value">{grade}</div>
-          </div>
+          {mode === "daily" && (
+            <>
+              <div className="stat place-items-center flex-[0.5]">
+                <div className="stat-title">Grade</div>
+                <div className="stat-value">{grade}</div>
+              </div>
 
-          <div className="stat place-items-center flex-[0.5]">
-            <div className="stat-title">Hints used</div>
-            <div className="stat-value">{3 - hintsLeft}</div>
-          </div>
+              <div className="stat place-items-center flex-[0.5]">
+                <div className="stat-title">Hints used</div>
+                <div className="stat-value">{3 - hintsLeft}</div>
+              </div>
+            </>
+          )}
 
           {mode === "daily" && (
             <>
@@ -112,12 +121,12 @@ const WonDialog: FC = () => {
                 <div className="stat-title">Max Streak</div>
                 <div className="stat-value">{maxDailyStreak}</div>
               </div>
-
-              <div className="stat place-items-center flex-[0.5]">
-                <div className="stat-title">Total Played</div>
-                <div className="stat-value">{totalPlayed}</div>
-              </div>
-            </>)}
+            </>
+          )}
+          <div className="stat place-items-center flex-[0.5]">
+            <div className="stat-title">Total Played</div>
+            <div className="stat-value">{totalPlayed}</div>
+          </div>
         </div>
         <div className="flex justify-center">
           <img id="result" className="h-[250px]" src={imageDataUrl} />

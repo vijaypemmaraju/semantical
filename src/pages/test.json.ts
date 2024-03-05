@@ -29,7 +29,7 @@ connectToNeo4j();
 const actionItemsSchema = z.object({
   words: z
     .array(z.string())
-    .describe("words semantically related to the given word")
+    .describe("words semantically related to the given word"),
 });
 const jsonSchema = zodToJsonSchema(actionItemsSchema, "mySchema");
 

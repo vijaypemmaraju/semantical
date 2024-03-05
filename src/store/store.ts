@@ -7,7 +7,7 @@ import {
 } from "force-graph";
 import { intervalToDuration } from "date-fns";
 
-export type Mode = "daily" | "unlimited";
+export type Mode = "daily" | "unlimited" | "bingo";
 
 type Store = {
   graph: ForceGraphInstance | null;
@@ -17,7 +17,8 @@ type Store = {
   won: boolean;
   start: string;
   current: string;
-  goal: string;
+  goals: string[];
+  found: string[];
   capturing: boolean;
   lock: boolean;
   clicks: number;
@@ -44,7 +45,8 @@ export const useStore = create<Store>(
       won: false,
       start: "",
       current: "",
-      goal: "",
+      goals: [""],
+      found: [],
       capturing: false,
       lock: false,
       clicks: 0,
@@ -82,6 +84,8 @@ export const useStore = create<Store>(
           path: [],
           pathIndex: 0,
           hintsLeft: 3,
+          goals: [""],
+          found: [],
         }));
       },
       resetFull: () => {
@@ -89,6 +93,8 @@ export const useStore = create<Store>(
           won: false,
           clicks: 0,
           imageDataUrl: "",
+          goals: [""],
+          found: [],
           path: [],
           pathIndex: 0,
           hintsLeft: 3,
@@ -116,7 +122,10 @@ export const useStore = create<Store>(
 );
 
 const lastCompletedDay = useStore.getState().lastCompletedDay;
-if (useStore.getState().mode === "unlimited") {
+if (
+  useStore.getState().mode === "unlimited" ||
+  useStore.getState().mode === "bingo"
+) {
   useStore.getState().resetDaily();
 } else if (
   lastCompletedDay &&

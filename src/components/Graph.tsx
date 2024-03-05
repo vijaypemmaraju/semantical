@@ -11,6 +11,14 @@ type Start = {
   path: string[];
 }
 
+type Bingo = {
+  start: string;
+  ends: {
+    word: string;
+    path: string[];
+  }[];
+}
+
 const Graph: FC = () => {
   const { nodes, links, current, graph } = useStore.getState();
   const mode = useStore((state) => state.mode);
@@ -23,11 +31,25 @@ const Graph: FC = () => {
     useStore.setState({
       start: data.words[0],
       current: data.words[0],
-      goal: data.words[1],
+      goals: [data.words[1]],
       nodes: [{ id: data.words[0] }],
       path: data.path,
     });
-  });
+  }, { enabled: mode !== 'bingo' });
+
+  useQuery(["bingo", mode], async () => {
+    const date = new Date();
+    const data = await ky
+      .get("./bingo.json", { timeout: 30000, searchParams: { seed: date.getTime() } })
+      .json<Bingo>();
+    useStore.setState({
+      start: data.start,
+      current: data.start,
+      goals: data.ends.map(e => e.word),
+      nodes: [{ id: data.start }],
+      // path: data.path,
+    });
+  }, { enabled: mode === 'bingo' });
 
 
   const [loaded, setLoaded] = useState(false);
@@ -53,8 +75,8 @@ const Graph: FC = () => {
   const client = useQueryClient();
 
   useEffect(() => {
-    const { nodes, goal, won } = useStore.getState();
-    if (nodes.find((n) => n.id === goal && !won)) {
+    const { nodes, goals, found, won } = useStore.getState();
+    if (found.length === 1 && !won) {
       graph!.zoomToFit(1000, isMobile() ? 100 : 250);
       useStore.setState({ capturing: true, won: true });
       useStore.getState().win();
@@ -134,6 +156,7 @@ const Graph: FC = () => {
         }, 100);
       });
     }
+
     useStore.setState({ lock: true, clicks: useStore.getState().clicks + 1 });
 
     node.loading = false;
@@ -150,7 +173,7 @@ const Graph: FC = () => {
         .get(`./word.json?word=${current}`, { timeout: 30000 })
         .json<{ words: string[] }>();
 
-      let { nodes, links } = useStore.getState();
+      let { nodes, links, goals, found } = useStore.getState();
       let newNodes: { id: string }[] = [];
       data.words.forEach((word: string) => {
         const newNode = { id: word };
@@ -167,7 +190,15 @@ const Graph: FC = () => {
         data.words.map((word: string) => ({ source: current, target: word }))
       );
 
-      useStore.setState({ nodes, links });
+      newNodes.forEach((node) => {
+        if (goals.includes(node.id)) {
+          found.push(node.id);
+        }
+      });
+
+      found = Array.from(new Set(found));
+
+      useStore.setState({ nodes, links, found });
       updateGraph();
       setLoaded(true);
     }
@@ -192,7 +223,7 @@ const Graph: FC = () => {
       .nodeId("id")
       .nodeAutoColorBy("id")
       .nodeCanvasObject((node: any, ctx, globalScale) => {
-        const { won, goal, start: word, capturing } = useStore.getState();
+        const { won, goals, start: word, capturing } = useStore.getState();
         node.size ||= 0.8;
         if (node.hover) {
           node.size = Math.min(node.size + 0.1, 1.1);
@@ -225,7 +256,7 @@ const Graph: FC = () => {
 
 
         // draw border around rect
-        if (node.id === goal) {
+        if (goals.includes(node.id)) {
           ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
         } else if (node.id === word) {
           ctx.strokeStyle = "rgba(55, 255, 55, 0.8)";
@@ -335,13 +366,14 @@ const Graph: FC = () => {
           <div className="flex gap-4">
             <select className="w-full max-w-xs select select-bordered" value={mode} onChange={(e) => {
               useStore.getState().graph?.graphData({ nodes: [], links: [] });
-              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goal: "", path: [], hintsLeft: 3, clicks: 0 });
+              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
               setLoaded(false);
             }}>
               <option value="daily">Daily</option>
               <option value="unlimited">Unlimited</option>
+              {!isMobile() && <option value="bingo">Bingo</option>}
             </select>
-            <button className="btn btn-primary" onClick={() => {
+            {mode !== 'bingo' && <button className="btn btn-primary" onClick={() => {
               const path = useStore.getState().path;
               const nodes = useStore.getState().nodes;
               for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
@@ -357,7 +389,7 @@ const Graph: FC = () => {
               }
             }}>
               Hint ({hintsLeft} left)
-            </button>
+            </button>}
           </div>
         </div>
       )}

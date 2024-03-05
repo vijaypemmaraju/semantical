@@ -94,7 +94,7 @@ export const GET: APIRoute = async ({ url }) => {
       Array.from(
         new Set(JSON.parse(extract.choices[0].message.content!).words)
       ) as string[]
-    ).map((word) => word?.replaceAll("_", " "));
+    ).map((word) => word?.replaceAll("_", " ").toLowerCase());
     driver.executeQuery(
       "MERGE (n:Word {word: $word, created_at: TIMESTAMP()}) RETURN n",
       {

@@ -335,7 +335,7 @@ const Graph: FC = () => {
           <div className="flex gap-4">
             <select className="w-full max-w-xs select select-bordered" value={mode} onChange={(e) => {
               useStore.getState().graph?.graphData({ nodes: [], links: [] });
-              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goal: "", path: [], hintsLeft: 99, clicks: 0 });
+              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goal: "", path: [], hintsLeft: 3, clicks: 0 });
               setLoaded(false);
             }}>
               <option value="daily">Daily</option>

@@ -25,19 +25,25 @@ const WonDialog: FC = () => {
     }
   }, [won]);
 
-
   const now = new Date();
   const tomorrow = new Date(
     now.getFullYear(),
     now.getMonth(),
     now.getDate() + 1
   );
-  const timeUntilBeginningOfNextDayInSeconds = (tomorrow.getTime() - now.getTime());
+  const timeUntilBeginningOfNextDayInSeconds =
+    tomorrow.getTime() - now.getTime();
 
-  const duration = intervalToDuration({ start: 0, end: timeUntilBeginningOfNextDayInSeconds });
+  const duration = intervalToDuration({
+    start: 0,
+    end: timeUntilBeginningOfNextDayInSeconds,
+  });
 
-
-  if (duration.hours === 0 && duration.minutes === 0 && duration.seconds === 0) {
+  if (
+    duration.hours === 0 &&
+    duration.minutes === 0 &&
+    duration.seconds === 0
+  ) {
     window.location.reload();
   }
 
@@ -51,12 +57,13 @@ const WonDialog: FC = () => {
 
   string += `${(duration.seconds || 0).toString().padStart(2, "0")}`;
 
-  const { maxDailyStreak, dailyStreak, totalPlayed, path, hintsLeft, mode } = useStore();
+  const { maxDailyStreak, dailyStreak, totalPlayed, path, hintsLeft, mode } =
+    useStore();
 
   let grade: string;
 
   if (clicks - path.length === 0) {
-    grade = "S"
+    grade = "S";
   } else if (clicks - path.length < 6) {
     grade = "A";
   } else if (clicks - path.length < 10) {
@@ -108,63 +115,83 @@ const WonDialog: FC = () => {
             <div className="stat-title">Total Played</div>
             <div className="stat-value">{totalPlayed}</div>
           </div>
-
         </div>
         <div className="flex justify-center">
           <img id="result" className="h-[250px]" src={imageDataUrl} />
         </div>
         <div className="modal-action">
           <form method="dialog">
-            {mode === 'daily' && <button
-              id="share"
-              className="btn btn-primary"
-              onClick={async () => {
-                const daysSinceFeb252024 = Math.floor(
-                  (new Date().getTime() - new Date("2024-02-25").getTime()) /
-                  (1000 * 60 * 60 * 24)
-                ) + 1;
-                console.log("days since feb 25 2024", daysSinceFeb252024);
-                let text = `#Semantical ${daysSinceFeb252024}\n${clicks} clicks\nGrade: ${grade}\nHints used: ${3 - hintsLeft}\n\nFind today's word at https://www.semantical.fun`;
-                if (isMobile() && navigator.share) {
-                  const blob = await (
-                    await fetch(
-                      document.getElementById("result")?.getAttribute("src")!
-                    )
-                  ).blob();
-                  const file = new File([blob], "graph.png", {
-                    type: blob.type,
-                  });
-                  navigator.share({
-                    title: "I found the word!",
-                    text,
-                    files: [file],
-                  });
-                } else {
-                  console.log("copying to clipboard", text);
-                  setTimeout(() => copy(text), 0);
-                  const div = document.createElement("div");
-                  div.innerHTML = `<div role="alert" class="alert alert-info absolute top-0 right-0 m-4 p-4 bg-blue-100 text-blue-900 rounded-lg flex items-center space-x-2 w-[50vw]">
+            {mode === "daily" && (
+              <button
+                className="mr-4 btn btn-neutral"
+                onClick={() => {
+                  useStore.setState({ mode: "unlimited" });
+                  window.location.reload();
+                }}
+              >
+                Switch to Unlimited
+              </button>
+            )}
+            {mode === "daily" && (
+              <button
+                id="share"
+                className="btn btn-primary"
+                onClick={async () => {
+                  const daysSinceFeb252024 =
+                    Math.floor(
+                      (new Date().getTime() -
+                        new Date("2024-02-25").getTime()) /
+                      (1000 * 60 * 60 * 24)
+                    ) + 1;
+                  console.log("days since feb 25 2024", daysSinceFeb252024);
+                  let text = `#Semantical ${daysSinceFeb252024}\n${clicks} clicks\nGrade: ${grade}\nHints used: ${3 - hintsLeft
+                    }\n\nFind today's word at https://www.semantical.fun`;
+                  if (isMobile() && navigator.share) {
+                    const blob = await (
+                      await fetch(
+                        document.getElementById("result")?.getAttribute("src")!
+                      )
+                    ).blob();
+                    const file = new File([blob], "graph.png", {
+                      type: blob.type,
+                    });
+                    navigator.share({
+                      title: "I found the word!",
+                      text,
+                      files: [file],
+                    });
+                  } else {
+                    console.log("copying to clipboard", text);
+                    setTimeout(() => copy(text), 0);
+                    const div = document.createElement("div");
+                    div.innerHTML = `<div role="alert" class="alert alert-info absolute top-0 right-0 m-4 p-4 bg-blue-100 text-blue-900 rounded-lg flex items-center space-x-2 w-[50vw]">
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
   <span>Copied to clipboard.</span>
 </div>`;
 
-                  document.querySelector("main")!.appendChild(div);
-                  setTimeout(() => {
-                    div.remove();
-                  }, 3000);
-                }
-              }}
-            >
-              Share
-            </button>}
-            <button className={"ml-4 btn " + (mode === "daily" ? "btn-neutral" : " btn-primary")}
+                    document.querySelector("main")!.appendChild(div);
+                    setTimeout(() => {
+                      div.remove();
+                    }, 3000);
+                  }
+                }}
+              >
+                Share
+              </button>
+            )}
+            <button
+              className={
+                "ml-4 btn " +
+                (mode === "daily" ? "btn-neutral" : " btn-primary")
+              }
               onClick={() => {
                 if (mode === "daily") {
-                  setOpen(false)
+                  setOpen(false);
                 } else {
                   window.location.reload();
                 }
-              }}>
+              }}
+            >
               {mode === "daily" ? "Continue Exploring" : "Play again"}
             </button>
           </form>

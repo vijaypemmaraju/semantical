@@ -57,14 +57,22 @@ export const useStore = create<Store>(
       pathIndex: 0,
       hintsLeft: 3,
       win: () => {
-        set((state) => ({
+        set(() => ({
           won: true,
-          clicks: state.clicks + 1,
-          dailyStreak: state.dailyStreak + 1,
-          lastCompletedDay: new Date().toLocaleDateString(),
-          totalPlayed: state.totalPlayed + 1,
-          maxDailyStreak: Math.max(state.maxDailyStreak, state.dailyStreak + 1),
         }));
+
+        if (get().mode === "daily") {
+          set((state) => ({
+            clicks: state.clicks + 1,
+            dailyStreak: state.dailyStreak + 1,
+            lastCompletedDay: new Date().toLocaleDateString(),
+            totalPlayed: state.totalPlayed + 1,
+            maxDailyStreak: Math.max(
+              state.maxDailyStreak,
+              state.dailyStreak + 1
+            ),
+          }));
+        }
       },
       resetDaily: () => {
         set((state) => ({

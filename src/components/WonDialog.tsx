@@ -101,20 +101,23 @@ const WonDialog: FC = () => {
             <div className="stat-value">{3 - hintsLeft}</div>
           </div>
 
-          <div className="stat place-items-center flex-[0.5]">
-            <div className="stat-title">Streak</div>
-            <div className="stat-value">{dailyStreak}</div>
-          </div>
+          {mode === "daily" && (
+            <>
+              <div className="stat place-items-center flex-[0.5]">
+                <div className="stat-title">Streak</div>
+                <div className="stat-value">{dailyStreak}</div>
+              </div>
 
-          <div className="stat place-items-center flex-[0.5]">
-            <div className="stat-title">Max Streak</div>
-            <div className="stat-value">{maxDailyStreak}</div>
-          </div>
+              <div className="stat place-items-center flex-[0.5]">
+                <div className="stat-title">Max Streak</div>
+                <div className="stat-value">{maxDailyStreak}</div>
+              </div>
 
-          <div className="stat place-items-center flex-[0.5]">
-            <div className="stat-title">Total Played</div>
-            <div className="stat-value">{totalPlayed}</div>
-          </div>
+              <div className="stat place-items-center flex-[0.5]">
+                <div className="stat-title">Total Played</div>
+                <div className="stat-value">{totalPlayed}</div>
+              </div>
+            </>)}
         </div>
         <div className="flex justify-center">
           <img id="result" className="h-[250px]" src={imageDataUrl} />

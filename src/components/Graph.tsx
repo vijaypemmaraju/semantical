@@ -376,9 +376,9 @@ const Graph: FC = () => {
   const handleClick = (nodeId: string) => {
     const node = nodes.find((n) => n.id === nodeId);
     if (node && graph) {
-      node.tempHighlight = true;
+      (node as any).tempHighlight = true;
       setTimeout(() => {
-        node.tempHighlight = false;
+        (node as any).tempHighlight = false;
       }, 1000);
       graph.centerAt(node.x, node.y, 1000);
       graph.zoom(2, 1000);

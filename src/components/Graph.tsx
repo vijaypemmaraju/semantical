@@ -3,6 +3,7 @@ import { useStore, type Mode } from "../store/store";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import ky from "ky";
 import ForceGraph from "force-graph";
+import * as d3 from "d3-force";
 import isMobile from "../util/isMobile";
 import { startOfDay } from "date-fns";
 
@@ -335,8 +336,9 @@ const Graph: FC = () => {
     Graph.d3Force("link")?.distance(() => {
       return 150;
     });
-    Graph.d3Force("charge")!.strength(-100);
-    Graph.d3Force("center", null);
+    // Graph.d3Force("charge")!.strength(-200);
+    Graph.d3Force("charge", d3.forceManyBody().strength(-400));
+    // Graph.d3Force("center", null);
     Graph.centerAt(0, 0, 1000);
     useStore.setState({ graph: Graph });
     updateGraph();
@@ -376,7 +378,7 @@ const Graph: FC = () => {
             {mode !== 'bingo' && <button className="btn btn-primary" onClick={() => {
               const path = useStore.getState().path;
               const nodes = useStore.getState().nodes;
-              for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
+              for (let i = useStore.getState().pathIndex + 1; i < path.length; i++) {
                 if (nodes.find(n => n.id === path[i])) {
                   useStore.setState({
                     pathIndex: i,

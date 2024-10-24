@@ -49,33 +49,39 @@ export const GET: APIRoute = async ({ url }) => {
   );
 
   let distanceBetweenWords = 0;
+  const mod = Math.min(words.length, 3000);
+  seed = Math.pow(seed, 2) % mod;
 
-  seed = Math.pow(seed, 2) % 3000;
-
-  let twoRandomWords = words.slice(seed, (seed + 2) % 3000);
+  let twoRandomWords = words.slice(seed, (seed + 2) % mod);
   let shortestPath = [];
-  while (distanceBetweenWords < 8 || distanceBetweenWords > 12) {
-    twoRandomWords = words.slice(seed, (seed + 2) % 3000);
-
-    const result = await driver.executeQuery(
-      `
+  while (distanceBetweenWords < 5 || distanceBetweenWords > 12) {
+    twoRandomWords = words.slice(seed, (seed + 2) % mod);
+    if (twoRandomWords.length === 2) {
+      const result = await driver.executeQuery(
+        `
     MATCH (n:Word {word: $word1}), (p:Word {word: $word2}),
     path = shortestPath((n)-[*]-(p))
     WHERE n <> p
     RETURN length(path) as score, path
   `,
-      {
-        word1: twoRandomWords[0],
-        word2: twoRandomWords[1],
-      }
-    );
-    distanceBetweenWords = Number(result.records[0]?.get("score")) || Infinity;
-    seed = (seed + 100) % 3000;
-    shortestPath =
-      result.records[0]
-        ?.get("path")
-        .segments.map((segment: any) => segment.start.properties.word) || [];
-    console.log(twoRandomWords, distanceBetweenWords.toString(), shortestPath);
+        {
+          word1: twoRandomWords[0],
+          word2: twoRandomWords[1],
+        }
+      );
+      distanceBetweenWords =
+        Number(result.records[0]?.get("score")) || Infinity;
+      shortestPath =
+        result.records[0]
+          ?.get("path")
+          .segments.map((segment: any) => segment.start.properties.word) || [];
+      console.log(
+        twoRandomWords,
+        distanceBetweenWords.toString(),
+        shortestPath
+      );
+    }
+    seed = (seed + 100) % mod;
   }
 
   const final = { words: twoRandomWords, path: shortestPath };

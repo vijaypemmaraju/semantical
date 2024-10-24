@@ -1,12 +1,13 @@
 import type { APIRoute } from "astro";
 import OpenAI from "openai";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { zodToJsonSchema } from "zod-to-json-schema";
 import neo4j, { Driver } from "neo4j-driver";
+import type { TextBlock } from "@anthropic-ai/sdk/resources/messages.mjs";
 
-const togetherai = new OpenAI({
-  apiKey: process.env.TOGETHER_API_KEY,
-  baseURL: "https://api.together.xyz/v1",
+const anthropic = new Anthropic({
+  apiKey: import.meta.env.ANTHROPIC_API_KEY,
 });
 
 let driver: Driver;
@@ -69,32 +70,36 @@ export const GET: APIRoute = async ({ url }) => {
   if (combinedWords.length < 2) {
     let extract;
     try {
-      extract = await togetherai.chat.completions.create({
+      extract = await anthropic.messages.create({
+        max_tokens: 4096,
         messages: [
           {
-            role: "system",
-            content: `You produce a dictionary word related to the provided word.`,
+            role: "user",
+            content: `You produce dictionary words that are semantically related to the provided word. The output should be a json array of 3-5 words.`,
           },
           {
             role: "user",
             content: word || "human",
           },
+          {
+            role: "assistant",
+            content: "[",
+          },
         ],
-        model: "mistralai/Mistral-7B-Instruct-v0.1",
-        // @ts-ignore – Together.ai supports schema while OpenAI does not
-        response_format: { type: "json_object", schema: jsonSchema },
+        model: "claude-3-haiku-20240307",
       });
+      console.log("extract", extract);
     } catch (e) {
       console.log(e);
       extract = {
-        choices: [{ message: { content: JSON.stringify({ words: [] }) } }],
+        completion: JSON.stringify({ words: [] }),
       };
+      return new Response(JSON.stringify({ words: [] }));
     }
-    const output = (
-      Array.from(
-        new Set(JSON.parse(extract.choices[0].message.content!).words)
-      ) as string[]
-    ).map((word) => word?.replaceAll("_", " ").toLowerCase());
+    const response = JSON.parse(`[${(extract.content[0] as TextBlock).text}`);
+    const output = (Array.from(new Set(response)) as string[]).map((word) =>
+      word?.replaceAll("_", " ").toLowerCase()
+    );
     driver.executeQuery(
       "MERGE (n:Word {word: $word, created_at: TIMESTAMP()}) RETURN n",
       {

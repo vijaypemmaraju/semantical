@@ -6,6 +6,8 @@ import ForceGraph from "force-graph";
 import * as d3 from "d3-force";
 import isMobile from "../util/isMobile";
 import { startOfDay } from "date-fns";
+import { FaSearch, FaTimes } from "react-icons/fa";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Start = {
   words: string[];
@@ -21,7 +23,7 @@ type Bingo = {
 }
 
 const Graph: FC = () => {
-  const { nodes, links, current, graph } = useStore.getState();
+  const { nodes, links, graph } = useStore.getState();
   const mode = useStore((state) => state.mode);
 
   useQuery(["start", mode], async () => {
@@ -36,7 +38,12 @@ const Graph: FC = () => {
       nodes: [{ id: data.words[0] }],
       path: data.path,
     });
-  }, { enabled: mode !== 'bingo' });
+    setTimeout(() => {
+      mutateAsync(data.words[0]);
+    }, 0);
+  }, {
+    enabled: mode !== 'bingo',
+  });
 
   useQuery(["bingo", mode], async () => {
     const date = new Date();
@@ -54,12 +61,6 @@ const Graph: FC = () => {
 
 
   const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    if (current) {
-      mutateAsync();
-    }
-  }, [current]);
 
   useEffect(() => {
     const resize = () => {
@@ -136,7 +137,7 @@ const Graph: FC = () => {
     graph!.centerAt(node.x, node.y, 1000);
 
     try {
-      await mutateAsync();
+      await mutateAsync(node.id);
     } catch (e) {
       console.error(e);
       node.loading = false;
@@ -164,14 +165,15 @@ const Graph: FC = () => {
     node.error = false;
     updateGraph();
   };
+  (window as any).onNodeClick = onNodeClick;
   useStore.setState({ lock: false });
 
 
   const { mutateAsync, isLoading: isMutating } = useMutation(
-    ["word", current],
-    async () => {
+    ["word"],
+    async (word: string) => {
       const data = await ky
-        .get(`./word.json?word=${current}`, { timeout: 30000 })
+        .get(`./word.json?word=${word}`, { timeout: 30000 })
         .json<{ words: string[] }>();
 
       let { nodes, links, goals, found } = useStore.getState();
@@ -188,7 +190,7 @@ const Graph: FC = () => {
       );
       // add links
       links = links.concat(
-        data.words.map((word: string) => ({ source: current, target: word }))
+        data.words.map((w: string) => ({ source: w, target: word }))
       );
 
       newNodes.forEach((node) => {
@@ -267,6 +269,13 @@ const Graph: FC = () => {
           ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
         }
 
+        if (node.tempHighlight) {
+          ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
+          ctx.lineWidth = 3;
+        } else {
+          ctx.lineWidth = 1;
+        }
+
 
         ctx.strokeRect(
           node.x! - bckgDimensions[0] / 2,
@@ -278,9 +287,7 @@ const Graph: FC = () => {
         ctx.textBaseline = "middle";
         ctx.fillStyle = node.clicked ? "rgba(138, 128, 128, 0.8)" : node.color;
         ctx.fillStyle = node.error ? "rgba(255, 0, 0, 0.8)" : ctx.fillStyle;
-        if (node.id === useStore.getState().current && client.isMutating({
-          mutationKey: ["word", node.id]
-        })) {
+        if (node.loading) {
           const currentTime = Date.now();
           ctx.beginPath();
           ctx.arc(
@@ -355,6 +362,32 @@ const Graph: FC = () => {
   };
 
   const hintsLeft = useStore((state) => state.hintsLeft);
+  const goals = useStore((state) => state.goals);
+  const found = useStore((state) => state.found);
+  const goal = goals[0];
+
+  const [isSearchPanelVisible, setIsSearchPanelVisible] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleClick = (nodeId: string) => {
+    const node = nodes.find((n) => n.id === nodeId);
+    if (node && graph) {
+      node.tempHighlight = true;
+      setTimeout(() => {
+        node.tempHighlight = false;
+      }, 1000);
+      graph.centerAt(node.x, node.y, 1000);
+      graph.zoom(2, 1000);
+    }
+  };
+
+  const filteredNodes = nodes.filter((node) =>
+    typeof node.id === "string" && node.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <>
@@ -363,19 +396,58 @@ const Graph: FC = () => {
           <span className="loading loading-spinner loading-lg"></span>
         </div>
       )}
-      {loaded && hintsLeft > 0 && (
-        <div className="absolute top-0 right-0 p-4 flex space-x-4 z-[999]">
-          <div className="flex gap-4">
-            <select className="w-full max-w-xs select select-bordered" value={mode} onChange={(e) => {
-              useStore.getState().graph?.graphData({ nodes: [], links: [] });
-              useStore.setState({ mode: e.target.value as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
-              setLoaded(false);
-            }}>
-              <option value="daily">Daily</option>
-              <option value="unlimited">Unlimited</option>
-              {!isMobile() && <option value="bingo">Bingo</option>}
-            </select>
-            {mode !== 'bingo' && <button className="btn btn-primary" onClick={() => {
+      {loaded && (
+        <div className="absolute top-0 left-0 right-0 p-4 flex flex-col md:flex-row items-center z-[999] bg-[rgba(75,75,86,0.4)]">
+          <div className="flex items-center space-x-4 overflow-hidden flex-1">
+            {goal && goals.length === 1 && (
+              <h1 className="p-0 text-2xl text-primary whitespace-nowrap" id="goal">
+                Find <strong>{goal}</strong>
+              </h1>
+            )}
+            {goals.length > 1 && (
+              <div className="p-0 text-2xl text-primary whitespace-nowrap" id="goal">
+                <div className="grid grid-cols-3 gap-0 p-4">
+                  {goals.map((goal) => (
+                    <div key={goal} className={`p-4 text-sm text-center border-2 border-primary ${found.includes(goal) ? "bg-stone-300 text-green-700 text-base" : ""}`}>
+                      <strong>{goal}</strong>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-4 mt-4 md:mt-0 justify-between items-center">
+            <details className="dropdown w-full max-w-xs">
+              <summary className="btn m-1 flex justify-between items-center">
+                {mode} <span className="ml-2">&#x25BC;</span>
+              </summary>
+              <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-full p-2 shadow">
+                <li>
+                  <a onClick={() => {
+                    useStore.getState().graph?.graphData({ nodes: [], links: [] });
+                    useStore.setState({ mode: "daily" as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
+                    setLoaded(false);
+                  }}>Daily</a>
+                </li>
+                <li>
+                  <a onClick={() => {
+                    useStore.getState().graph?.graphData({ nodes: [], links: [] });
+                    useStore.setState({ mode: "unlimited" as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
+                    setLoaded(false);
+                  }}>Unlimited</a>
+                </li>
+                {/* {!isMobile() && (
+                  <li>
+                    <a onClick={() => {
+                      useStore.getState().graph?.graphData({ nodes: [], links: [] });
+                      useStore.setState({ mode: "bingo" as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
+                      setLoaded(false);
+                    }}>Bingo</a>
+                  </li>
+                )} */}
+              </ul>
+            </details>
+            {mode !== 'bingo' && <button className="btn btn-primary whitespace-nowrap" onClick={() => {
               const path = useStore.getState().path;
               const nodes = useStore.getState().nodes;
               for (let i = useStore.getState().pathIndex + 1; i < path.length; i++) {
@@ -392,7 +464,44 @@ const Graph: FC = () => {
             }}>
               Hint ({hintsLeft} left)
             </button>}
+            <button
+              className="p-2 bg-primary text-white rounded-lg whitespace-nowrap h-12"
+              onClick={() => setIsSearchPanelVisible(!isSearchPanelVisible)}
+            >
+              {isSearchPanelVisible ? <FaTimes className="text-black" /> : <FaSearch className="text-black" />}
+            </button>
           </div>
+          <AnimatePresence>
+            {isSearchPanelVisible && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="absolute top-full right-0 bg-black shadow-md rounded-lg w-full sm:w-auto p-4 mt-2"
+              >
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  placeholder="Search for a word"
+                  className="input input-bordered w-full mb-4 rounded-lg text-white"
+                />
+                <ul className="list-none p-0 max-h-[80vh] overflow-y-auto">
+                  {filteredNodes.map((node) => (
+                    <li
+                      key={node.id}
+                      className="cursor-pointer p-2 hover:bg-gray-200 rounded-lg"
+                      style={{ color: (node as any).color }}
+                      onClick={() => handleClick(node.id as string)}
+                    >
+                      {node.id}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       )}
       <div

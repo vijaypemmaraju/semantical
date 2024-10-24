@@ -3,7 +3,9 @@ import { QueryClient, QueryClientProvider } from "react-query";
 import Graph from "./Graph";
 import WonDialog from "./WonDialog";
 import { useStore } from "../store/store";
-import Goal from "./Goal";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FaSearch, FaTimes } from "react-icons/fa";
 
 export const client = new QueryClient({
   defaultOptions: {
@@ -16,7 +18,6 @@ export const client = new QueryClient({
 const App: FC = () => {
   return (
     <QueryClientProvider client={client}>
-      <Goal />
       <div className="w-[100vw] h-[100vh]">
         <Graph />
         <WonDialog />

@@ -382,6 +382,9 @@ const Graph: FC = () => {
       }, 1000);
       graph.centerAt(node.x, node.y, 1000);
       graph.zoom(2, 1000);
+      if (isMobile()) {
+        setIsSearchPanelVisible(false);
+      }
     }
   };
 

@@ -447,7 +447,7 @@ const Graph: FC = () => {
                 )} */}
               </ul>
             </details>
-            {mode !== 'bingo' && <button className="btn btn-primary whitespace-nowrap" onClick={() => {
+            {mode !== 'bingo' && hintsLeft > 0 && <button className="btn btn-primary whitespace-nowrap" onClick={() => {
               const path = useStore.getState().path;
               const nodes = useStore.getState().nodes;
               for (let i = useStore.getState().pathIndex + 1; i < path.length; i++) {

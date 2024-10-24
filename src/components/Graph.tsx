@@ -450,7 +450,7 @@ const Graph: FC = () => {
             {mode !== 'bingo' && hintsLeft > 0 && <button className="btn btn-primary whitespace-nowrap" onClick={() => {
               const path = useStore.getState().path;
               const nodes = useStore.getState().nodes;
-              for (let i = useStore.getState().pathIndex + 1; i < path.length; i++) {
+              for (let i = path.length - 1; i > useStore.getState().pathIndex; i--) {
                 if (nodes.find(n => n.id === path[i])) {
                   useStore.setState({
                     pathIndex: i,

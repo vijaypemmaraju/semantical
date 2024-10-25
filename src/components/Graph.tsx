@@ -1,5 +1,6 @@
 import { useEffect, type FC, useState, useRef } from "react";
 import { useStore, type Mode } from "../store/store";
+import confetti from "canvas-confetti";
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import ky from "ky";
 import ForceGraph from "force-graph";
@@ -77,55 +78,71 @@ const Graph: FC = () => {
   const client = useQueryClient();
 
   useEffect(() => {
-    const { nodes, goals, found, won } = useStore.getState();
-    if (found.length === goals.length && !won) {
-      graph!.zoomToFit(1000, isMobile() ? 100 : 250);
-      useStore.setState({ capturing: true, won: true });
-      useStore.getState().win();
-      //   capturing = true;
-      let file: File;
-      graph!.linkWidth(3);
-      setTimeout(async () => {
-        const originalCanvas = document.querySelector("canvas")!;
-        const heightToUse = isMobile()
-          ? originalCanvas.height / 2
-          : originalCanvas.height;
-        const desiredWidth = 1500;
-        const desiredHeight =
-          desiredWidth * (heightToUse / originalCanvas.width);
-        let startingY = isMobile() ? originalCanvas.height / 4 : 0;
-        let endingY = isMobile()
-          ? (3 * originalCanvas.height) / 4
-          : originalCanvas.height;
-        const canvas = document.createElement("canvas");
-        canvas.width = desiredWidth;
-        canvas.height = desiredHeight;
-        // draw background
-        const context = canvas.getContext("2d")!;
+    const win = async () => {
+      const { nodes, goals, found, won } = useStore.getState();
+      if (found.length === goals.length && !won) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+        if (goals.length === 1) {
+          const goalNode = nodes.find(n => n.id === goals[0]);
+          if (goalNode) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            graph!.centerAt(goalNode.x, goalNode.y, 1000);
+          }
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        graph!.zoomToFit(1000, isMobile() ? 100 : 250);
+        useStore.setState({ capturing: true, won: true });
+        //   capturing = true;
+        let file: File;
+        graph!.linkWidth(3);
+        setTimeout(async () => {
+          const originalCanvas = document.querySelector("canvas")!;
+          const heightToUse = isMobile()
+            ? originalCanvas.height / 2
+            : originalCanvas.height;
+          const desiredWidth = 1500;
+          const desiredHeight =
+            desiredWidth * (heightToUse / originalCanvas.width);
+          let startingY = isMobile() ? originalCanvas.height / 4 : 0;
+          let endingY = isMobile()
+            ? (3 * originalCanvas.height) / 4
+            : originalCanvas.height;
+          const canvas = document.createElement("canvas");
+          canvas.width = desiredWidth;
+          canvas.height = desiredHeight;
+          // draw background
+          const context = canvas.getContext("2d")!;
 
-        context.fillStyle = "#1d232a";
-        context.fillRect(0, 0, canvas.width, canvas.height);
-        context.drawImage(
-          originalCanvas,
-          0,
-          startingY,
-          originalCanvas.width,
-          endingY,
-          0,
-          0,
-          desiredWidth,
-          desiredHeight
-        );
-        const imageUrl = canvas!.toDataURL("image/png");
-        document.getElementById("result")!.setAttribute("src", imageUrl);
-        const blob = await (
-          await fetch(document.getElementById("result")?.getAttribute("src")!)
-        ).blob();
-        file = new File([blob], "graph.png", { type: blob.type });
-        useStore.setState({ imageDataUrl: imageUrl, capturing: false });
-        graph!.linkWidth(6);
-      }, 1000);
+          context.fillStyle = "#1d232a";
+          context.lineWidth = 10;
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(
+            originalCanvas,
+            0,
+            startingY,
+            originalCanvas.width,
+            endingY,
+            0,
+            0,
+            desiredWidth,
+            desiredHeight
+          );
+          const imageUrl = canvas!.toDataURL("image/png");
+          document.getElementById("result")!.setAttribute("src", imageUrl);
+          const blob = await (
+            await fetch(document.getElementById("result")?.getAttribute("src")!)
+          ).blob();
+          file = new File([blob], "graph.png", { type: blob.type });
+          useStore.setState({ imageDataUrl: imageUrl, capturing: false });
+          graph!.linkWidth(6);
+        }, 1000);
+      }
     }
+    win();
   }, [nodes]);
 
   const onNodeClick = async (node: any) => {

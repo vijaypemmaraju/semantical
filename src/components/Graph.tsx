@@ -207,7 +207,7 @@ const Graph: FC = () => {
       );
       // add links
       links = links.concat(
-        data.words.map((w: string) => ({ source: w, target: word }))
+        data.words.map((w: string) => ({ source: word, target: w }))
       );
 
       newNodes.forEach((node) => {

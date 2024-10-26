@@ -54,7 +54,7 @@ export const GET: APIRoute = async ({ url }) => {
 
   let twoRandomWords = words.slice(seed, (seed + 2) % mod);
   let shortestPath = [];
-  while (distanceBetweenWords < 4 || distanceBetweenWords > 12) {
+  while (distanceBetweenWords < 5 || distanceBetweenWords > 12) {
     twoRandomWords = words.slice(seed, (seed + 2) % mod);
     if (twoRandomWords.length === 2) {
       const result = await driver.executeQuery(

@@ -207,7 +207,6 @@ const Graph: FC = () => {
       );
       // add links
       const newLinks = data.words.map((w: string) => ({ source: word, target: w }));
-      console.log('links', links, newLinks);
       for (const newLink of newLinks) {
         if (!links.some(link => {
           const sourceId = typeof link.source === 'string' ? link.source : (link.source as { id: string }).id;

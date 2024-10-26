@@ -58,6 +58,9 @@ const Graph: FC = () => {
       nodes: [{ id: data.start }],
       // path: data.path,
     });
+    setTimeout(() => {
+      mutateAsync(data.start);
+    }, 0);
   }, { enabled: mode === 'bingo' });
 
 
@@ -497,15 +500,13 @@ const Graph: FC = () => {
                     setLoaded(false);
                   }}>Unlimited</a>
                 </li>
-                {/* {!isMobile() && (
-                  <li>
-                    <a onClick={() => {
-                      useStore.getState().graph?.graphData({ nodes: [], links: [] });
-                      useStore.setState({ mode: "bingo" as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
-                      setLoaded(false);
-                    }}>Bingo</a>
-                  </li>
-                )} */}
+                <li>
+                  <a onClick={() => {
+                    useStore.getState().graph?.graphData({ nodes: [], links: [] });
+                    useStore.setState({ mode: "bingo" as Mode, graph: null, nodes: [], links: [], current: "", start: "", goals: [""], path: [], hintsLeft: 3, clicks: 0 });
+                    setLoaded(false);
+                  }}>Bingo</a>
+                </li>
               </ul>
             </details>
             {mode !== 'bingo' && hintsLeft > 0 && <button className="btn btn-primary whitespace-nowrap" onClick={() => {

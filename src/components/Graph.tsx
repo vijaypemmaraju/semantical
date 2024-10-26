@@ -212,8 +212,8 @@ const Graph: FC = () => {
         if (!links.some(link => {
           const sourceId = typeof link.source === 'string' ? link.source : (link.source as { id: string }).id;
           const targetId = typeof link.target === 'string' ? link.target : (link.target as { id: string }).id;
-          const newSourceId = typeof newLink.source === 'string' ? newLink.source : newLink.source.id;
-          const newTargetId = typeof newLink.target === 'string' ? newLink.target : newLink.target.id;
+          const newSourceId = typeof newLink.source === 'string' ? newLink.source : (newLink.source as any).id;
+          const newTargetId = typeof newLink.target === 'string' ? newLink.target : (newLink.target as any).id;
 
           return (sourceId === newSourceId && targetId === newTargetId) ||
             (sourceId === newTargetId && targetId === newSourceId);

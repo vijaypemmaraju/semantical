@@ -206,9 +206,21 @@ const Graph: FC = () => {
         (node, index, self) => self.findIndex((n) => n.id === node.id) === index
       );
       // add links
-      links = links.concat(
-        data.words.map((w: string) => ({ source: word, target: w }))
-      );
+      const newLinks = data.words.map((w: string) => ({ source: word, target: w }));
+      console.log('links', links, newLinks);
+      for (const newLink of newLinks) {
+        if (!links.some(link => {
+          const sourceId = typeof link.source === 'string' ? link.source : (link.source as { id: string }).id;
+          const targetId = typeof link.target === 'string' ? link.target : (link.target as { id: string }).id;
+          const newSourceId = typeof newLink.source === 'string' ? newLink.source : newLink.source.id;
+          const newTargetId = typeof newLink.target === 'string' ? newLink.target : newLink.target.id;
+
+          return (sourceId === newSourceId && targetId === newTargetId) ||
+            (sourceId === newTargetId && targetId === newSourceId);
+        })) {
+          links.push(newLink);
+        }
+      }
 
       newNodes.forEach((node) => {
         if (goals.includes(node.id)) {
@@ -277,20 +289,22 @@ const Graph: FC = () => {
 
         // draw border around rect
         if (goals.includes(node.id)) {
+          ctx.lineWidth = 3;
           ctx.strokeStyle = "rgba(255, 215, 0, 0.8)";
         } else if (node.id === word) {
+          ctx.lineWidth = 1;
           ctx.strokeStyle = "rgba(55, 255, 55, 0.8)";
         } else if (pathUpToIndex.includes(node.id)) {
+          ctx.lineWidth = 3;
           ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
         } else {
+          ctx.lineWidth = 1;
           ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
         }
 
         if (node.tempHighlight) {
           ctx.strokeStyle = "rgba(255, 255, 255, 0.8)";
           ctx.lineWidth = 3;
-        } else {
-          ctx.lineWidth = 1;
         }
 
 
@@ -327,8 +341,17 @@ const Graph: FC = () => {
       .onNodeClick(onNodeClick)
       .linkWidth(6)
       .zoom(/* check mobile */ window.innerWidth < 600 ? 1.2 : 1)
-      .linkColor(() => "rgba(128, 128, 256, 0.2)")
-      .linkDirectionalParticles(2)
+      .linkColor((link) => {
+        const { path, pathIndex } = useStore.getState();
+        const pathUpToIndex = path.slice(0, pathIndex + 1);
+        const isInPath = pathUpToIndex.includes(link.source.id) && pathUpToIndex.includes(link.target.id);
+        return isInPath ? "rgba(255, 255, 255, 0.8)" : "rgba(128, 128, 256, 0.2)";
+      })
+      .linkDirectionalParticles((link) => {
+        const { path, pathIndex } = useStore.getState();
+        const pathUpToIndex = path.slice(0, pathIndex + 1);
+        return pathUpToIndex.includes(link.source.id) && pathUpToIndex.includes(link.target.id) ? 2 : 0;
+      })
       .linkCurvature(0.25)
       // .enableNodeDrag(false)
       .onNodeHover((node: any, previousNode: any) => {
@@ -358,10 +381,12 @@ const Graph: FC = () => {
           );
       });
     Graph.d3Force("link")?.distance(() => {
-      return 150;
+      return 100;
     });
     // Graph.d3Force("charge")!.strength(-200);
-    Graph.d3Force("charge", d3.forceManyBody().strength(-400));
+    Graph.d3Force("charge", d3.forceManyBody().strength(-300));
+    // Graph.d3Force("charge", d3.forceCollide((d: any) => 150));
+
     // Graph.d3Force("center", null);
     Graph.centerAt(0, 0, 1000);
     useStore.setState({ graph: Graph });

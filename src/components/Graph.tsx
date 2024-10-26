@@ -344,13 +344,30 @@ const Graph: FC = () => {
       .linkColor((link) => {
         const { path, pathIndex } = useStore.getState();
         const pathUpToIndex = path.slice(0, pathIndex + 1);
-        const isInPath = pathUpToIndex.includes(link.source.id) && pathUpToIndex.includes(link.target.id);
+        const isInPath =
+          link.source &&
+          link.target &&
+          typeof link.source === 'object' &&
+          typeof link.target === 'object' &&
+          'id' in link.source &&
+          'id' in link.target &&
+          pathUpToIndex.includes(link.source.id as string) &&
+          pathUpToIndex.includes(link.target.id as string);
         return isInPath ? "rgba(255, 255, 255, 0.8)" : "rgba(128, 128, 256, 0.2)";
       })
       .linkDirectionalParticles((link) => {
         const { path, pathIndex } = useStore.getState();
         const pathUpToIndex = path.slice(0, pathIndex + 1);
-        return pathUpToIndex.includes(link.source.id) && pathUpToIndex.includes(link.target.id) ? 2 : 0;
+        return (
+          link.source &&
+          link.target &&
+          typeof link.source === 'object' &&
+          typeof link.target === 'object' &&
+          'id' in link.source &&
+          'id' in link.target &&
+          pathUpToIndex.includes(link.source.id as string) &&
+          pathUpToIndex.includes(link.target.id as string)
+        ) ? 2 : 0;
       })
       .linkCurvature(0.25)
       // .enableNodeDrag(false)

@@ -4,8 +4,6 @@
 
 Semantical is an AI-powered word association game that challenges players to find semantic connections between words. The game utilizes Claude Haiku and Neo4j to create an interactive graph-based exploration of semantic relationships.
 
-![Semantical Game](https://github.com/vijaypemmaraju/semantical/raw/main/public/preview.png)
-
 ## How to Play
 
 Semantical has three game modes:
